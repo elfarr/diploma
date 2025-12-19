@@ -1,0 +1,6 @@
+outer,selector,k,best_model,best_calibration,params_json,features_json,mean_brier_valid,n_inners
+1,unknown_selector,-1,xgb,platt,"{""clf__learning_rate"": 0.05, ""clf__max_depth"": 3, ""clf__n_estimators"": 100}","[""relative risk"", ""ЭХО ЗС перед ТП""]",0.08267107033906121,1
+2,unknown_selector,-1,xgb,platt,"{""clf__learning_rate"": 0.1, ""clf__max_depth"": 3, ""clf__n_estimators"": 100}","[""relative risk"", ""ЛПНП перед ТП"", ""Пол"", ""Диагноз"", ""ЭХО ЗС перед ТП""]",0.07206502827780371,1
+3,unknown_selector,-1,xgb,platt,"{""clf__learning_rate"": 0.1, ""clf__max_depth"": 4, ""clf__n_estimators"": 100}","[""relative risk"", ""ЛПНП перед ТП"", ""ЭХО ЛП перед ТП"", ""Диагноз""]",0.08707800674717187,1
+4,unknown_selector,-1,xgb,none,"{""clf__learning_rate"": 0.1, ""clf__max_depth"": 3, ""clf__n_estimators"": 100}","[""relative risk"", ""Мочевая кислота перед ТП"", ""Пол"", ""ЭХО ЗС перед ТП"", ""ОТТ перед ТП""]",0.07879317306037043,1
+5,unknown_selector,-1,xgb,platt,"{""clf__learning_rate"": 0.1, ""clf__max_depth"": 3, ""clf__n_estimators"": 100}","[""relative risk"", ""ЛПНП перед ТП"", ""ЭХО ЗС перед ТП"", ""САД перед ТП"", ""стадия ХСН перед ТП""]",0.07299088792890708,1

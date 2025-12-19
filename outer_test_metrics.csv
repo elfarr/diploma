@@ -1,0 +1,6 @@
+outer,selector,k,model,calibration,brier_outer_test
+1,unknown_selector,-1,xgb,platt,0.10960391703266635
+2,unknown_selector,-1,xgb,platt,0.13769546758711657
+3,unknown_selector,-1,xgb,platt,0.0784731475313559
+4,unknown_selector,-1,xgb,none,0.1391007985320685
+5,unknown_selector,-1,xgb,platt,0.09856914207125535

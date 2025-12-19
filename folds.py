@@ -18,4 +18,3 @@ for outer_fold in sorted(df["fold_outer"].unique()):
 
 print(df["fold_inner"].value_counts())
 df.to_csv("data/processed/with_inner_folds.csv", sep=";", index=False)
-
