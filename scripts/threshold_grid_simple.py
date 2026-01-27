@@ -2,13 +2,13 @@ import os
 import numpy as np
 import pandas as pd
 
-PRED_PATH = "outer_test_predictions.csv"  
+PRED_PATH = "reports/tables/outer_test_predictions_agg.csv"  
 OUT_PATH = "reports/tables/grid_thresholds.csv"
 
 t_low_values  = np.arange(0.20, 0.50 + 1e-9, 0.05)
 t_high_values = np.arange(0.50, 0.80 + 1e-9, 0.05)
 
-P_COL = "p_cal"
+P_COL = "p"
 Y_COL = "y_true"
 
 df = pd.read_csv(PRED_PATH)

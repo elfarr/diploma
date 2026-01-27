@@ -1,0 +1,2 @@
+T_low,T_high,coverage,rate_undetermined,sens,spec,PPV,NPV,F1,n_total,n_defined,n_undetermined
+0.35,0.55,0.9528795811518325,0.04712041884816753,1.0,0.0,0.8461538461538461,0.0,0.9166666666666666,191,182,9

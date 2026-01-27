@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PRED_PATH = "outer_test_predictions.csv"
+PRED_PATH = "reports/tables/outer_test_predictions_agg.csv"
 OUT_FIG = "reports/figs/dca_curves.png"
 OUT_CSV = "reports/tables/dca_values.csv"
 
 T_LOW = 0.35
 T_HIGH = 0.55
 
-P_COL = "p_cal"
+P_COL = "p"
 Y_COL = "y_true"
 
 pt_values = np.arange(0.10, 0.90 + 1e-9, 0.01)
