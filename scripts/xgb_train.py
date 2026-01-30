@@ -90,6 +90,12 @@ clf = XGBClassifier(
 )
 clf.fit(X, y)
 
+import joblib
+import os
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(clf, "models/final_model.pkl")
+
 background = X.sample(min(100, len(X)), random_state=42)
 explainer = shap.Explainer(clf, background, feature_names=X.columns)
 shap_values = explainer(X)

@@ -1,0 +1,244 @@
+{
+  "features": [
+    {
+      "name": "Пол",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "Диагноз",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "Донор",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ИБС до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ХНС до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ОНМК до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ТЭЛА до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ИМ до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "стадия ХСН перед ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "КАГ до ТП",
+      "type": "categorical",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "unknown_category->all_zeros"
+    },
+    {
+      "name": "ОХ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЛПНП перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЛПВП перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ТГ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "Мочевая кислота перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО ЛП перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО КДР перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО МЖП перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО ЗС перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО СДЛА перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО ФВ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО ММЛЖ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ЭХО ИММЛЖ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ОТТ перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "САД перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "ДАД перед ТП",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "QRISK3",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "healthy person risk",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "relative risk",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    },
+    {
+      "name": "qrisk age",
+      "type": "numeric",
+      "units": "",
+      "valid_range": "",
+      "missing": "allowed",
+      "impute": "median"
+    }
+  ]
+}
