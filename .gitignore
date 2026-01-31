@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+find_min.py
+find_min2.py
+
