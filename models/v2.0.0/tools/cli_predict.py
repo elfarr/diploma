@@ -58,22 +58,24 @@ def validate_and_vectorize(sample: dict, feature_order: list[str], feature_meta:
     return arr, warnings
 
 
-def apply_thresholds(p: float, thr: dict) -> str:
+def apply_thresholds(p_fav: float, thr: dict) -> str:
     t_low = float(thr["t_low"])
     t_high = float(thr["t_high"])
-    if p < t_low:
-        return "благоприятный"
-    if p > t_high:
+    if p_fav < t_low:
         return "неблагоприятный"
+    if p_fav > t_high:
+        return "благоприятный"
     return "неопределено"
 
 
 def run_model(model_dir: Path, x: np.ndarray) -> float:
     model = joblib.load(model_dir / "final_model.pkl")
-    proba = model.predict_proba(x)
-    if proba.ndim == 2 and proba.shape[1] >= 2:
-        return float(proba[0, 1])
-    return float(proba.ravel()[0])
+    proba = model.predict_proba(x)[0]
+    if proba.ndim == 0:
+        proba = [proba]
+    if len(proba) >= 2:
+        return float(proba[1])
+    return float(proba[0])
 
 
 def main():
@@ -94,12 +96,12 @@ def main():
     feature_meta = {f["name"]: f for f in signature["input"]["features"]}
 
     x, warnings = validate_and_vectorize(sample, feature_order, feature_meta)
-    p = run_model(model_dir, x)
-    verdict = apply_thresholds(p, thresholds)
+    p_fav = run_model(model_dir, x)
+    verdict = apply_thresholds(p_fav, thresholds)
 
     result = {
         "версия": signature.get("version", "unknown"),
-        "вероятность_неблагоприятного": round(p, 6),
+        "вероятность_благоприятного": round(p_fav, 6),
         "вердикт": verdict,
     }
 
@@ -113,14 +115,14 @@ def main():
         expected = sample.get("expected")
         if not expected:
             return
-        exp_p = expected.get("p_unfavorable")
+        exp_p = expected.get("p_favorable") or expected.get("p_unfavorable")
         exp_v = expected.get("verdict")
         ok = True
         if exp_p is not None:
-            diff = abs(float(exp_p) - float(result["вероятность_неблагоприятного"]))
+            diff = abs(float(exp_p) - float(result["вероятность_благоприятного"]))
             if diff > 1e-3:
                 ok = False
-                print(f"ожидалось={exp_p}, получили={result['вероятность_неблагоприятного']}, diff={diff}")
+                print(f"ожидалось={exp_p}, получили={result['вероятность_благоприятного']}, diff={diff}")
         if exp_v is not None:
             verdict_map = {
                 "благоприятный": "favorable",
@@ -131,6 +133,7 @@ def main():
             if exp_v != got_v_compare:
                 ok = False
                 print(f"ожидалось={exp_v}, получили={got_v_compare}")
+
 
 if __name__ == "__main__":
     main()

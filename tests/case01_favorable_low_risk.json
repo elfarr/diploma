@@ -53,7 +53,7 @@
   "КАГ до ТП_есть": 0,
   "КАГ до ТП_нет": 1,
   "expected": {
-    "p_unfavorable": 0.317,
+    "p_favorable": 0.683,
     "verdict": "favorable"
   }
 }

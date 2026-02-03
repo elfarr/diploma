@@ -69,7 +69,7 @@ def main():
         exp_v = expected.get("verdict", None)
 
         res = run_case(f, args.model, args.cli)
-        got_p = res.get("вероятность_неблагоприятного") or res.get("p_unfavorable")
+        got_p = res.get("вероятность_благоприятного") or res.get("p_favorable") or res.get("p_unfavorable")
         got_v = res.get("вердикт") or res.get("verdict")
 
         verdict_map = {

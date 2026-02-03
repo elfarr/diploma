@@ -1,7 +1,7 @@
 {
   "version": "v2.0.0",
   "task": "binary_classification",
-  "positive_class": "unfavorable",
+  "positive_class": "favorable",
   "input": {
     "format": "vector",
     "dtype": "float32",
@@ -433,7 +433,7 @@
     ]
   },
   "output": {
-    "probability_name": "p_unfavorable",
+    "probability_name": "p_favorable",
     "verdict_name": "verdict",
     "classes": [
       "favorable",
