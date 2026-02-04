@@ -4,13 +4,14 @@ from pathlib import Path
 from typing import Dict
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 
 from api.core.config import settings
 from api.models.onnx_runtime import OnnxModel
 from api.schemas.request import PredictRequest
 from api.schemas.response import PredictResponse
-from api.services.explainer import explain_stub
-from api.services.predictor import PredictorService, load_signature
+from api.services.explainer import explain
+from api.services.predictor import PredictorService, load_signature, BadInputError, MissingFeatureError
 from api.utils.validators import RangeSpec
 
 app = FastAPI(title="Kidney Tx Risk API", version="0.1.0")
@@ -55,6 +56,21 @@ def healthz():
     return {"status": "ok"}
 
 
+@app.exception_handler(BadInputError)
+async def bad_input_handler(request, exc: BadInputError):
+    return JSONResponse(status_code=400, content={"error": str(exc), "code": 400})
+
+    
+@app.exception_handler(MissingFeatureError)
+async def missing_feature_handler(request, exc: MissingFeatureError):
+    return JSONResponse(status_code=422, content={"error": str(exc), "code": 422})
+
+
+@app.exception_handler(Exception)
+async def unhandled_handler(request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": "Internal error", "code": 500})
+
+
 @app.get("/meta")
 def meta():
     return {
@@ -74,10 +90,11 @@ def predict(req: PredictRequest):
 
     try:
         base_resp, _ = PRED.predict(req.features, req.unit_convert)
-        explain = explain_stub(req.features)
-        base_resp["explain"] = explain
+        base_resp["explain"] = explain(req.features)
         return base_resp
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    except BadInputError as e:
+        return JSONResponse(status_code=400, content={"error": str(e), "code": 400})
+    except MissingFeatureError as e:
+        return JSONResponse(status_code=422, content={"error": str(e), "code": 422})
     except Exception:
-        raise HTTPException(status_code=500)
+        return JSONResponse(status_code=500, content={"error": "Internal error", "code": 500})

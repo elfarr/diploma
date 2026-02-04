@@ -1,19 +1,21 @@
 from __future__ import annotations
 from pydantic import BaseModel, Field
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Optional
 
 ClassLabel = Literal["low", "high", "undetermined"]
-ConfidenceLabel = Literal["low", "med", "high"]
+
 
 class ExplainItem(BaseModel):
     feature: str
     impact: float
     direction: Literal["up", "down"]
 
+
 class PredictResponse(BaseModel):
     class_: ClassLabel = Field(..., alias="class")
-    prob_cal: float
-    confidence: ConfidenceLabel
+    p_raw: Optional[float] = Field(None, description="Вероятность положительного класса из модели")
+    p_cal: float = Field(..., description="Калиброванная вероятность положительного класса")
+    confidence: float = Field(..., description="Уверенность |p_cal-0.5|")
     thresholds: Dict[str, float]
     explain: List[ExplainItem] = []
     ood: bool = False

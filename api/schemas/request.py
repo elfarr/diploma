@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
 
 class PredictRequest(BaseModel):
-    features: Dict[str, float] = Field(..., description="Словарь признаков: имя - значение")
+    features: Dict[str, Any] = Field(..., description="Словарь признаков: имя - значение")
     unit_convert: bool = Field(False, description="Конвертировать единицы измерения")
 
     @field_validator("features")
