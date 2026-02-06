@@ -1,9 +1,15 @@
-from dataclasses import dataclass
+from fastapi import Response, Header, HTTPException, status
+from .config import settings
 
-@dataclass(frozen=True)
-class Versions:
-    model_version: str
-    schema_version: str
+def add_version_headers(response: Response):
+    response.headers["X-Model-Version"] = settings.MODEL_VERSION
+    response.headers["X-Schema-Version"] = settings.SCHEMA_VERSION
 
-def get_versions(model_version: str, schema_version: str) -> Versions:
-    return Versions(model_version=model_version, schema_version=schema_version)
+
+async def enforce_model_version(x_model_version: str | None = Header(default=None)):
+    if x_model_version and x_model_version != settings.MODEL_VERSION:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"requested {x_model_version}, available {settings.MODEL_VERSION}",
+        )
+    return True

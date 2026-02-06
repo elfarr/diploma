@@ -18,7 +18,7 @@ def base_payload():
 
 
 def test_missing_feature():
-    with TestClient(app) as client:
+    with TestClient(app, headers={"Authorization": "Bearer secret", "X-Model-Version": "v2.0.0"}) as client:
         payload = base_payload()
         missing_key = appmod.FEATURE_ORDER[0]
         payload["features"].pop(missing_key)
@@ -27,7 +27,7 @@ def test_missing_feature():
 
 
 def test_out_of_range():
-    with TestClient(app) as client:
+    with TestClient(app, headers={"Authorization": "Bearer secret", "X-Model-Version": "v2.0.0"}) as client:
         payload = base_payload()
         key = appmod.FEATURE_ORDER[0]
         appmod.RANGES[key] = RangeSpec(low=-1.0, high=1.0)
@@ -39,7 +39,7 @@ def test_out_of_range():
 
 
 def test_bad_type():
-    with TestClient(app) as client:
+    with TestClient(app, headers={"Authorization": "Bearer secret", "X-Model-Version": "v2.0.0"}) as client:
         payload = base_payload()
         key = appmod.FEATURE_ORDER[1]
         payload["features"][key] = "not_a_number"

@@ -16,7 +16,7 @@ def make_full_payload():
 
 
 def test_predict_ok():
-    with TestClient(app) as client:
+    with TestClient(app, headers={"Authorization": "Bearer secret", "X-Model-Version": "v2.0.0"}) as client:
         payload = make_full_payload()
         resp = client.post("/predict", json=payload)
         assert resp.status_code == 200
