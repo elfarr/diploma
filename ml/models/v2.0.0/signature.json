@@ -1,0 +1,443 @@
+{
+  "version": "v2.0.0",
+  "task": "binary_classification",
+  "positive_class": "favorable",
+  "input": {
+    "format": "vector",
+    "dtype": "float32",
+    "features": [
+      {
+        "name": "ОХ перед ТП",
+        "type": "float",
+        "label": "ОХ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЛПНП перед ТП",
+        "type": "float",
+        "label": "ЛПНП перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЛПВП перед ТП",
+        "type": "float",
+        "label": "ЛПВП перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ТГ перед ТП",
+        "type": "float",
+        "label": "ТГ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Мочевая кислота перед ТП",
+        "type": "float",
+        "label": "Мочевая кислота перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО ЛП перед ТП",
+        "type": "float",
+        "label": "ЭХО ЛП перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО КДР перед ТП",
+        "type": "float",
+        "label": "ЭХО КДР перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО МЖП перед ТП",
+        "type": "float",
+        "label": "ЭХО МЖП перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО ЗС перед ТП",
+        "type": "float",
+        "label": "ЭХО ЗС перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО СДЛА перед ТП",
+        "type": "float",
+        "label": "ЭХО СДЛА перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО ФВ перед ТП",
+        "type": "float",
+        "label": "ЭХО ФВ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО ММЛЖ перед ТП",
+        "type": "float",
+        "label": "ЭХО ММЛЖ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ЭХО ИММЛЖ перед ТП",
+        "type": "float",
+        "label": "ЭХО ИММЛЖ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ОТТ перед ТП",
+        "type": "float",
+        "label": "ОТТ перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "САД перед ТП",
+        "type": "float",
+        "label": "САД перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ДАД перед ТП",
+        "type": "float",
+        "label": "ДАД перед ТП",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "QRISK3",
+        "type": "float",
+        "label": "QRISK3",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "healthy person risk",
+        "type": "float",
+        "label": "healthy person risk",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "relative risk",
+        "type": "float",
+        "label": "relative risk",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "qrisk age",
+        "type": "float",
+        "label": "qrisk age",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Пол_жен",
+        "type": "float",
+        "label": "Пол_жен",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Пол_муж",
+        "type": "float",
+        "label": "Пол_муж",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_АРМС",
+        "type": "float",
+        "label": "Диагноз_АРМС",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_ДБСТ",
+        "type": "float",
+        "label": "Диагноз_ДБСТ",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_МКБ",
+        "type": "float",
+        "label": "Диагноз_МКБ",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Периодическая болезнь",
+        "type": "float",
+        "label": "Диагноз_Периодическая болезнь",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Подагра",
+        "type": "float",
+        "label": "Диагноз_Подагра",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Поликлистоз",
+        "type": "float",
+        "label": "Диагноз_Поликлистоз",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Сахарный диабет",
+        "type": "float",
+        "label": "Диагноз_Сахарный диабет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_ХГН",
+        "type": "float",
+        "label": "Диагноз_ХГН",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Хронический тубулоинтерстицильный нефрит",
+        "type": "float",
+        "label": "Диагноз_Хронический тубулоинтерстицильный нефрит",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_Хронический тубулоинтерстицильный нефрит без ГУС",
+        "type": "float",
+        "label": "Диагноз_Хронический тубулоинтерстицильный нефрит без ГУС",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_прочие",
+        "type": "float",
+        "label": "Диагноз_прочие",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Диагноз_с-м Альпорта",
+        "type": "float",
+        "label": "Диагноз_с-м Альпорта",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Донор_От живого донора неродственная",
+        "type": "float",
+        "label": "Донор_От живого донора неродственная",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Донор_От живого донора родственная",
+        "type": "float",
+        "label": "Донор_От живого донора родственная",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "Донор_трупная почка",
+        "type": "float",
+        "label": "Донор_трупная почка",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ИБС до ТП_есть",
+        "type": "float",
+        "label": "ИБС до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ИБС до ТП_нет",
+        "type": "float",
+        "label": "ИБС до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ХНС до ТП_есть",
+        "type": "float",
+        "label": "ХНС до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ХНС до ТП_нет",
+        "type": "float",
+        "label": "ХНС до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ОНМК до ТП_есть",
+        "type": "float",
+        "label": "ОНМК до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ОНМК до ТП_нет",
+        "type": "float",
+        "label": "ОНМК до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ТЭЛА до ТП_есть",
+        "type": "float",
+        "label": "ТЭЛА до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ТЭЛА до ТП_нет",
+        "type": "float",
+        "label": "ТЭЛА до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ИМ до ТП_есть",
+        "type": "float",
+        "label": "ИМ до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "ИМ до ТП_нет",
+        "type": "float",
+        "label": "ИМ до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "стадия ХСН перед ТП_1 ФК",
+        "type": "float",
+        "label": "стадия ХСН перед ТП_1 ФК",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "стадия ХСН перед ТП_2 ФК",
+        "type": "float",
+        "label": "стадия ХСН перед ТП_2 ФК",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "стадия ХСН перед ТП_3 ФК",
+        "type": "float",
+        "label": "стадия ХСН перед ТП_3 ФК",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "стадия ХСН перед ТП_нет",
+        "type": "float",
+        "label": "стадия ХСН перед ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "КАГ до ТП_есть",
+        "type": "float",
+        "label": "КАГ до ТП_есть",
+        "unit": "",
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "КАГ до ТП_нет",
+        "type": "float",
+        "label": "КАГ до ТП_нет",
+        "unit": "",
+        "min": null,
+        "max": null
+      }
+    ]
+  },
+  "output": {
+    "probability_name": "p_favorable",
+    "verdict_name": "verdict",
+    "classes": [
+      "favorable",
+      "unfavorable"
+    ]
+  }
+}
