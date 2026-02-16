@@ -7,6 +7,7 @@ from fastapi import FastAPI, Depends, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Summary, Histogram, Counter
 from starlette.responses import PlainTextResponse
+from src.api.meta import build_meta_payload
 from .core.config import settings
 from .core.versioning import add_version_headers, enforce_model_version
 from .core.middleware.request_id import RequestIDMiddleware
@@ -29,6 +30,11 @@ FEATURE_ORDER = []
 RANGES = {}
 PRED = None
 THRESHOLDS = {"t_low": settings.T_LOW, "t_high": settings.T_HIGH}
+MODEL_CATALOG = [
+    {"model_name": "svm_rbf", "model_version": settings.MODEL_VERSION},
+    {"model_name": "catboost", "model_version": settings.MODEL_VERSION},
+    {"model_name": "mlp", "model_version": settings.MODEL_VERSION},
+]
 
 
 def _load_thresholds(model_dir: Path) -> dict:
@@ -46,7 +52,6 @@ def _load_thresholds(model_dir: Path) -> dict:
 
 
 def _init_predictor() -> None:
-    """Load model assets once on startup so /predict uses real inference."""
     global FEATURE_ORDER, RANGES, PRED, THRESHOLDS
     model_dir = Path(settings.MODEL_DIR)
     FEATURE_ORDER, ranges_raw, _units = load_signature(model_dir / "signature.json")
@@ -112,12 +117,18 @@ async def healthz(response: Response):
 @instrument("/meta", "GET")
 async def meta(response: Response):
     add_version_headers(response)
-    return {
-        "model_version": settings.MODEL_VERSION,
-        "schema_version": settings.SCHEMA_VERSION,
-        "thresholds": THRESHOLDS,
-        "features": FEATURE_ORDER,
+    ranges = {
+        name: {"low": spec.low, "high": spec.high}
+        for name, spec in RANGES.items()
     }
+    return build_meta_payload(
+        model_version=settings.MODEL_VERSION,
+        schema_version=settings.SCHEMA_VERSION,
+        thresholds=THRESHOLDS,
+        models=MODEL_CATALOG,
+        features=FEATURE_ORDER,
+        ranges=ranges,
+    )
 
 @app.post("/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
 @instrument("/predict", "POST")
@@ -142,7 +153,38 @@ async def predict(request: Request, response: Response):
         return JSONResponse(status_code=500, content={"error": "Не удалось выполнить инференс"})
 
     PRED_COUNT.labels(out.get("class", "unknown")).inc()
-    return out
+    undetermined = out.get("class") == "undetermined"
+
+    models = [
+        {
+            "model_name": model["model_name"],
+            "model_version": model["model_version"],
+            "proba": out.get("p_cal"),
+            "calibrated": out.get("p_cal") is not None,
+            "calibration_method": "platt" if out.get("p_cal") is not None else None,
+            "undetermined": undetermined,
+        }
+        for model in MODEL_CATALOG
+    ]
+    ensemble_proba = sum(m["proba"] for m in models) / len(models)
+
+    return {
+        "models": models,
+        "ensemble": {
+            "proba": ensemble_proba,
+            "strategy": "mean_calibrated",
+        },
+        "explain": out.get("explain", []),
+        "class": out.get("class"),
+        "p_raw": out.get("p_raw"),
+        "p_cal": out.get("p_cal"),
+        "confidence": out.get("confidence"),
+        "thresholds": out.get("thresholds"),
+        "ood": out.get("ood"),
+        "model_version": out.get("model_version"),
+        "schema_version": out.get("schema_version"),
+        "timing_ms": out.get("timing_ms"),
+    }
 
 @app.get("/metrics")
 async def metrics():

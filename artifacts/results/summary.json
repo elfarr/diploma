@@ -1,0 +1,536 @@
+{
+  "seed": 42,
+  "k_star": 30,
+  "k_star_final": 30,
+  "k_star_default": 10,
+  "k_star_candidates": [
+    10,
+    20,
+    30
+  ],
+  "best_k_star": 30,
+  "target": "Исход",
+  "n_features": 30,
+  "features_used": [
+    "Пол",
+    "Диагноз",
+    "Донор",
+    "ИБС до ТП",
+    "ХНС до ТП",
+    "ОНМК до ТП",
+    "ТЭЛА до ТП",
+    "ИМ до ТП",
+    "стадия ХСН перед ТП",
+    "КАГ до ТП",
+    "ОХ перед ТП",
+    "ЛПНП перед ТП",
+    "ЛПВП перед ТП",
+    "ТГ перед ТП",
+    "Мочевая кислота перед ТП",
+    "ЭХО ЛП перед ТП",
+    "ЭХО КДР перед ТП",
+    "ЭХО МЖП перед ТП",
+    "ЭХО ЗС перед ТП",
+    "ЭХО СДЛА перед ТП",
+    "ЭХО ФВ перед ТП",
+    "ЭХО ММЛЖ перед ТП",
+    "ЭХО ИММЛЖ перед ТП",
+    "ОТТ перед ТП",
+    "САД перед ТП",
+    "ДАД перед ТП",
+    "QRISK3",
+    "healthy person risk",
+    "relative risk",
+    "qrisk age"
+  ],
+  "k_star_metrics": [
+    {
+      "k_star": 10,
+      "best_test_roc_auc": 0.71875
+    },
+    {
+      "k_star": 20,
+      "best_test_roc_auc": 0.6919642857142857
+    },
+    {
+      "k_star": 30,
+      "best_test_roc_auc": 0.8169642857142857
+    }
+  ],
+  "k_star_results": {
+    "10": {
+      "k_star": 10,
+      "n_features": 10,
+      "features_used": [
+        "Пол",
+        "Диагноз",
+        "Донор",
+        "ИБС до ТП",
+        "ХНС до ТП",
+        "ОНМК до ТП",
+        "ТЭЛА до ТП",
+        "ИМ до ТП",
+        "стадия ХСН перед ТП",
+        "КАГ до ТП"
+      ],
+      "best_test_roc_auc": 0.71875,
+      "models": {
+        "svm_rbf": {
+          "status": "ok",
+          "best_params": {
+            "C": 10.0,
+            "gamma": "scale"
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.4562094033638749,
+            "pr_auc": 0.20413583613933087,
+            "brier": 0.14645696739643507
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.5520067105432959,
+              "pr_auc": 0.23353136958085216,
+              "brier": 0.14581544952220182
+            },
+            "isotonic": {
+              "roc_auc": 0.5330257667656042,
+              "pr_auc": 0.21781269406559134,
+              "brier": 0.1471897297357895
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.7008928571428571,
+            "pr_auc": 0.40007215007215,
+            "brier": 0.14430871256021768
+          }
+        },
+        "catboost": {
+          "status": "ok",
+          "best_params": {
+            "depth": 4,
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "class_weights": "balanced"
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.5353594012130598,
+            "pr_auc": 0.22842809147578555,
+            "brier": 0.2244106200434832
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.46775928076741086,
+              "pr_auc": 0.18136851087056136,
+              "brier": 0.14856915746250066
+            },
+            "isotonic": {
+              "roc_auc": 0.5587495160665893,
+              "pr_auc": 0.2864849787631642,
+              "brier": 0.1532915225896658
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.5714285714285714,
+            "pr_auc": 0.2596640105317489,
+            "brier": 0.14596848941622684
+          }
+        },
+        "mlp": {
+          "status": "ok",
+          "best_params": {
+            "layers": [
+              16,
+              8
+            ],
+            "dropout": 0.2,
+            "weight_decay": 0.0001,
+            "early_stopping": true
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.5302404611347701,
+            "pr_auc": 0.26434304240099094,
+            "brier": 0.152790457051879
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.6116273067492579,
+              "pr_auc": 0.353647302096346,
+              "brier": 0.14142489953632145
+            },
+            "isotonic": {
+              "roc_auc": 0.5703531638490987,
+              "pr_auc": 0.2996519780686493,
+              "brier": 0.1454482075236892
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.71875,
+            "pr_auc": 0.44353408029878616,
+            "brier": 0.14187277520249061
+          }
+        }
+      }
+    },
+    "20": {
+      "k_star": 20,
+      "n_features": 20,
+      "features_used": [
+        "Пол",
+        "Диагноз",
+        "Донор",
+        "ИБС до ТП",
+        "ХНС до ТП",
+        "ОНМК до ТП",
+        "ТЭЛА до ТП",
+        "ИМ до ТП",
+        "стадия ХСН перед ТП",
+        "КАГ до ТП",
+        "ОХ перед ТП",
+        "ЛПНП перед ТП",
+        "ЛПВП перед ТП",
+        "ТГ перед ТП",
+        "Мочевая кислота перед ТП",
+        "ЭХО ЛП перед ТП",
+        "ЭХО КДР перед ТП",
+        "ЭХО МЖП перед ТП",
+        "ЭХО ЗС перед ТП",
+        "ЭХО СДЛА перед ТП"
+      ],
+      "best_test_roc_auc": 0.6919642857142857,
+      "models": {
+        "svm_rbf": {
+          "status": "ok",
+          "best_params": {
+            "C": 10.0,
+            "gamma": 0.01
+          },
+          "best_calibrator": "isotonic",
+          "inner_best_metrics": {
+            "roc_auc": 0.7653030498558954,
+            "pr_auc": 0.44446130303973436,
+            "brier": 0.1348401891191639
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.781498688002753,
+              "pr_auc": 0.4265958031581798,
+              "brier": 0.13453489579240033
+            },
+            "isotonic": {
+              "roc_auc": 0.7711102507850476,
+              "pr_auc": 0.3741608163142391,
+              "brier": 0.13106150535777217
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.6629464285714286,
+            "pr_auc": 0.34897253215667534,
+            "brier": 0.14400219185702204
+          }
+        },
+        "catboost": {
+          "status": "ok",
+          "best_params": {
+            "depth": 4,
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "class_weights": "balanced"
+          },
+          "best_calibrator": "isotonic",
+          "inner_best_metrics": {
+            "roc_auc": 0.6789048049210651,
+            "pr_auc": 0.2885757551439528,
+            "brier": 0.1620479372804133
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.7060265840753646,
+              "pr_auc": 0.31499183170559325,
+              "brier": 0.14417659258939006
+            },
+            "isotonic": {
+              "roc_auc": 0.7183077386329418,
+              "pr_auc": 0.3085232847758895,
+              "brier": 0.13474551301827553
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.6919642857142857,
+            "pr_auc": 0.40813813813813815,
+            "brier": 0.14529369684253132
+          }
+        },
+        "mlp": {
+          "status": "ok",
+          "best_params": {
+            "layers": [
+              16
+            ],
+            "dropout": 0.2,
+            "weight_decay": 0.001,
+            "early_stopping": true
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.6077558394631565,
+            "pr_auc": 0.34872317741224323,
+            "brier": 0.17161970013574776
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.5736008947391061,
+              "pr_auc": 0.23690363061853234,
+              "brier": 0.14603853715502976
+            },
+            "isotonic": {
+              "roc_auc": 0.5529745773648213,
+              "pr_auc": 0.24339809899266585,
+              "brier": 0.1504125947674317
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.5892857142857142,
+            "pr_auc": 0.26373626373626374,
+            "brier": 0.14547874420641102
+          }
+        }
+      }
+    },
+    "30": {
+      "k_star": 30,
+      "n_features": 30,
+      "features_used": [
+        "Пол",
+        "Диагноз",
+        "Донор",
+        "ИБС до ТП",
+        "ХНС до ТП",
+        "ОНМК до ТП",
+        "ТЭЛА до ТП",
+        "ИМ до ТП",
+        "стадия ХСН перед ТП",
+        "КАГ до ТП",
+        "ОХ перед ТП",
+        "ЛПНП перед ТП",
+        "ЛПВП перед ТП",
+        "ТГ перед ТП",
+        "Мочевая кислота перед ТП",
+        "ЭХО ЛП перед ТП",
+        "ЭХО КДР перед ТП",
+        "ЭХО МЖП перед ТП",
+        "ЭХО ЗС перед ТП",
+        "ЭХО СДЛА перед ТП",
+        "ЭХО ФВ перед ТП",
+        "ЭХО ММЛЖ перед ТП",
+        "ЭХО ИММЛЖ перед ТП",
+        "ОТТ перед ТП",
+        "САД перед ТП",
+        "ДАД перед ТП",
+        "QRISK3",
+        "healthy person risk",
+        "relative risk",
+        "qrisk age"
+      ],
+      "best_test_roc_auc": 0.8169642857142857,
+      "models": {
+        "svm_rbf": {
+          "status": "ok",
+          "best_params": {
+            "C": 1.0,
+            "gamma": 0.01
+          },
+          "best_calibrator": "isotonic",
+          "inner_best_metrics": {
+            "roc_auc": 0.8457650449520369,
+            "pr_auc": 0.5935853100156656,
+            "brier": 0.113430932032075
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.8342581838516798,
+              "pr_auc": 0.5780666517476217,
+              "brier": 0.11394719373753144
+            },
+            "isotonic": {
+              "roc_auc": 0.8364305071622145,
+              "pr_auc": 0.5586617330948794,
+              "brier": 0.11358836224675779
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.7120535714285714,
+            "pr_auc": 0.6587329720970274,
+            "brier": 0.10158542915873771
+          }
+        },
+        "catboost": {
+          "status": "ok",
+          "best_params": {
+            "depth": 3,
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "class_weights": "balanced"
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.8740912805953456,
+            "pr_auc": 0.6607691063114752,
+            "brier": 0.1101316017801569
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.8766507506344906,
+              "pr_auc": 0.6480491808834217,
+              "brier": 0.10622475596095153
+            },
+            "isotonic": {
+              "roc_auc": 0.876822815847206,
+              "pr_auc": 0.6675028434748299,
+              "brier": 0.10832966084015357
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.8169642857142857,
+            "pr_auc": 0.7334656084656084,
+            "brier": 0.0899765115993483
+          }
+        },
+        "mlp": {
+          "status": "ok",
+          "best_params": {
+            "layers": [
+              16
+            ],
+            "dropout": 0.2,
+            "weight_decay": 0.001,
+            "early_stopping": true
+          },
+          "best_calibrator": "platt",
+          "inner_best_metrics": {
+            "roc_auc": 0.643007699918269,
+            "pr_auc": 0.32000718484770363,
+            "brier": 0.19915660202237362
+          },
+          "inner_calibration_metrics": {
+            "platt": {
+              "roc_auc": 0.6774637587645719,
+              "pr_auc": 0.3807048214919833,
+              "brier": 0.13900959972522625
+            },
+            "isotonic": {
+              "roc_auc": 0.6467501182948338,
+              "pr_auc": 0.34076579102658894,
+              "brier": 0.1401988704587339
+            }
+          },
+          "test_metrics": {
+            "roc_auc": 0.6830357142857142,
+            "pr_auc": 0.416981212547715,
+            "brier": 0.13691758042929872
+          }
+        }
+      }
+    }
+  },
+  "models": {
+    "svm_rbf": {
+      "status": "ok",
+      "best_params": {
+        "C": 1.0,
+        "gamma": 0.01
+      },
+      "best_calibrator": "isotonic",
+      "inner_best_metrics": {
+        "roc_auc": 0.8457650449520369,
+        "pr_auc": 0.5935853100156656,
+        "brier": 0.113430932032075
+      },
+      "inner_calibration_metrics": {
+        "platt": {
+          "roc_auc": 0.8342581838516798,
+          "pr_auc": 0.5780666517476217,
+          "brier": 0.11394719373753144
+        },
+        "isotonic": {
+          "roc_auc": 0.8364305071622145,
+          "pr_auc": 0.5586617330948794,
+          "brier": 0.11358836224675779
+        }
+      },
+      "test_metrics": {
+        "roc_auc": 0.7120535714285714,
+        "pr_auc": 0.6587329720970274,
+        "brier": 0.10158542915873771
+      }
+    },
+    "catboost": {
+      "status": "ok",
+      "best_params": {
+        "depth": 3,
+        "n_estimators": 300,
+        "learning_rate": 0.03,
+        "class_weights": "balanced"
+      },
+      "best_calibrator": "platt",
+      "inner_best_metrics": {
+        "roc_auc": 0.8740912805953456,
+        "pr_auc": 0.6607691063114752,
+        "brier": 0.1101316017801569
+      },
+      "inner_calibration_metrics": {
+        "platt": {
+          "roc_auc": 0.8766507506344906,
+          "pr_auc": 0.6480491808834217,
+          "brier": 0.10622475596095153
+        },
+        "isotonic": {
+          "roc_auc": 0.876822815847206,
+          "pr_auc": 0.6675028434748299,
+          "brier": 0.10832966084015357
+        }
+      },
+      "test_metrics": {
+        "roc_auc": 0.8169642857142857,
+        "pr_auc": 0.7334656084656084,
+        "brier": 0.0899765115993483
+      }
+    },
+    "mlp": {
+      "status": "ok",
+      "best_params": {
+        "layers": [
+          16
+        ],
+        "dropout": 0.2,
+        "weight_decay": 0.001,
+        "early_stopping": true
+      },
+      "best_calibrator": "platt",
+      "inner_best_metrics": {
+        "roc_auc": 0.643007699918269,
+        "pr_auc": 0.32000718484770363,
+        "brier": 0.19915660202237362
+      },
+      "inner_calibration_metrics": {
+        "platt": {
+          "roc_auc": 0.6774637587645719,
+          "pr_auc": 0.3807048214919833,
+          "brier": 0.13900959972522625
+        },
+        "isotonic": {
+          "roc_auc": 0.6467501182948338,
+          "pr_auc": 0.34076579102658894,
+          "brier": 0.1401988704587339
+        }
+      },
+      "test_metrics": {
+        "roc_auc": 0.6830357142857142,
+        "pr_auc": 0.416981212547715,
+        "brier": 0.13691758042929872
+      }
+    }
+  }
+}

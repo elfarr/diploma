@@ -1,0 +1,18 @@
+svm_rbf:
+  C: [0.1, 1, 10]
+  gamma: ["scale", 0.1, 0.01]
+
+catboost:
+  depth: [3, 4, 6]
+  n_estimators: [300, 500]
+  learning_rate: [0.03, 0.06]
+  class_weights: "balanced"
+
+mlp:
+  layers: [[8], [16], [16, 8]]
+  dropout: [0.2, 0.3, 0.4]
+  weight_decay: [1e-4, 1e-3]
+  early_stopping: true
+
+calibration:
+  methods: ["platt", "isotonic"]

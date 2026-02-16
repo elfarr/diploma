@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/predict_response.schema.json",
+  "title": "PredictResponse",
+  "type": "object",
+  "required": ["models", "ensemble"],
+  "properties": {
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "model_name",
+          "model_version",
+          "proba",
+          "calibrated",
+          "calibration_method",
+          "undetermined"
+        ],
+        "properties": {
+          "model_name": {
+            "type": "string",
+            "enum": ["svm_rbf", "catboost", "mlp"]
+          },
+          "model_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "proba": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "calibrated": {
+            "type": "boolean"
+          },
+          "calibration_method": {
+            "oneOf": [
+              { "type": "string", "enum": ["platt", "isotonic"] },
+              { "type": "null" }
+            ]
+          },
+          "undetermined": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ensemble": {
+      "type": "object",
+      "required": ["proba", "strategy"],
+      "properties": {
+        "proba": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "strategy": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "explain": {
+      "type": ["array", "null"]
+    }
+  },
+  "additionalProperties": true
+}
+
