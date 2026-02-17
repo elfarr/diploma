@@ -1,0 +1,6 @@
+outer_fold,best_params,best_calibrator,roc_auc,pr_auc,brier,ece
+1,"{""depth"": 4, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": ""balanced""}",isotonic,0.8482142857142856,0.6923076923076923,0.11064285391269521,0.0908831908831909
+2,"{""depth"": 6, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": ""balanced""}",platt,0.7916666666666667,0.6934974747474747,0.09852599969767202,0.0785634712362191
+3,"{""depth"": 6, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": ""balanced""}",platt,0.9585253456221198,0.8864468864468864,0.12209759896865886,0.10723762327670726
+4,"{""depth"": 3, ""n_estimators"": 300, ""learning_rate"": 0.06, ""class_weights"": ""balanced""}",isotonic,0.7050691244239632,0.38195138195138195,0.15411245856284894,0.12990099409003242
+5,"{""depth"": 3, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": ""balanced""}",isotonic,0.8847926267281105,0.7763157894736841,0.0759558432424549,0.11813701571131882
