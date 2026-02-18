@@ -1,0 +1,10 @@
+{
+  "model": "svm_rbf",
+  "k_star": 30,
+  "best_params": {
+    "C": 1.0,
+    "gamma": 0.01
+  },
+  "calibration": "isotonic",
+  "notes": "Выбрано по минимуму inner-CV brier_mean; итоговый выбор семейства модели выполнен по outer pooled оценке"
+}

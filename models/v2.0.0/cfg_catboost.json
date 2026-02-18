@@ -1,0 +1,12 @@
+{
+  "model": "catboost",
+  "k_star": 30,
+  "best_params": {
+    "depth": 3,
+    "n_estimators": 300,
+    "learning_rate": 0.03,
+    "class_weights": "balanced"
+  },
+  "calibration": "platt",
+  "notes": "Выбрано по минимуму inner-CV brier_mean; итоговый выбор семейства модели выполнен по outer pooled оценке"
+}
