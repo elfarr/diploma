@@ -1,0 +1,6 @@
+{
+  "n_total": 191,
+  "n_bins_actual": 10,
+  "binning_mode": "qcut",
+  "ece_weighted": 0.0691050221437635
+}

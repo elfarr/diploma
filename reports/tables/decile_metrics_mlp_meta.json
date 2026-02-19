@@ -1,0 +1,6 @@
+{
+  "n_total": 191,
+  "n_bins_actual": 2,
+  "binning_mode": "fixed_0.1",
+  "ece_weighted": 0.03358537703471141
+}

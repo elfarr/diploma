@@ -66,7 +66,7 @@ class CalibratedModelWrapper:
             return self.calibrator.predict_proba(raw_score.reshape(-1, 1))[:, 1]
         if self.calibrator_type == "isotonic":
             return np.clip(self.calibrator.predict(raw_score), 0.0, 1.0)
-        raise ValueError(f"Неизвестный тип калибратора: {self.calibrator_type}")
+        raise ValueError()
 
 
 def setup_logging() -> None:
@@ -114,6 +114,70 @@ def compute_ece(y_true: Sequence[int], p_cal: Sequence[float], n_bins: int = 10)
         weight = float(mask.mean())
         ece += abs(acc - conf) * weight
     return float(ece)
+
+
+def assign_decile_bins_with_fallback(p_cal: Iterable[float]) -> tuple[pd.Series, str]:
+    p_series = pd.Series(p_cal).astype(float)
+    if p_series.isna().any():
+        raise ValueError()
+    if (p_series < 0).any() or (p_series > 1).any():
+        raise ValueError()
+
+    q_bins = pd.qcut(p_series, q=10, labels=False, duplicates="drop")
+    n_unique_bins = int(pd.Series(q_bins).nunique(dropna=True))
+    if n_unique_bins == 10:
+        return pd.Series(q_bins, index=p_series.index, dtype=int), "qcut"
+
+    fixed_bins = np.floor(p_series.to_numpy() * 10).astype(int)
+    fixed_bins = np.clip(fixed_bins, 0, 9)
+    return pd.Series(fixed_bins, index=p_series.index, dtype=int), "fixed_0.1"
+
+
+def compute_bin_metrics_table(
+    y_true: Iterable[Any],
+    p_cal: Iterable[float],
+) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    y_series = pd.Series(y_true)
+    p_series = pd.Series(p_cal).astype(float)
+    if len(y_series) != len(p_series):
+        raise ValueError()
+    if len(y_series) == 0:
+        raise ValueError()
+
+    y_bin = to_binary_target(y_series)
+    bins, binning_mode = assign_decile_bins_with_fallback(p_series)
+
+    tmp = pd.DataFrame({"y_true": y_bin, "p_cal": p_series, "bin": bins})
+    n_total = len(tmp)
+    rows: List[Dict[str, Any]] = []
+    weighted_ece = 0.0
+
+    for bin_id in sorted(tmp["bin"].unique().tolist()):
+        part = tmp[tmp["bin"] == bin_id]
+        n_bin = len(part)
+        mean_y = float(part["y_true"].mean())
+        mean_p = float(part["p_cal"].mean())
+        brier_bin = float(((part["p_cal"] - part["y_true"]) ** 2).mean())
+        ece_bin = float(abs(mean_y - mean_p))
+        weighted_ece += ece_bin * (n_bin / n_total)
+        rows.append(
+            {
+                "bin": int(bin_id),
+                "n_bin": int(n_bin),
+                "mean_y_true": mean_y,
+                "mean_p_cal": mean_p,
+                "brier_bin": brier_bin,
+                "ece_bin": ece_bin,
+            }
+        )
+
+    summary = {
+        "n_total": int(n_total),
+        "n_bins_actual": int(tmp["bin"].nunique()),
+        "binning_mode": binning_mode,
+        "ece_weighted": float(weighted_ece),
+    }
+    return pd.DataFrame(rows), summary
 
 
 def compute_metrics(y_true: Iterable[Any], p_pred: Iterable[float]) -> MetricDict:
