@@ -4,6 +4,7 @@ import argparse
 import itertools
 import json
 import logging
+import math
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -219,6 +220,50 @@ def compute_metrics(y_true: Iterable[Any], p_pred: Iterable[float]) -> MetricDic
         }
     except Exception as exc:
         raise ValueError() from exc
+
+
+def select_model(
+    p_svm: float,
+    p_cat: float,
+    p_mlp: float,
+    competence: Dict[str, Any],
+    fallback_model: str = "catboost",
+) -> dict:
+    p_avg = float((float(p_svm) + float(p_cat) + float(p_mlp)) / 3.0)
+    bin_id = int(math.floor(p_avg * 10.0))
+    bin_id = max(0, min(9, bin_id))
+
+    model_names = ["svm_rbf", "catboost", "mlp"]
+    available: List[tuple[str, float, float]] = []
+
+    ece_map = competence.get("ece", {})
+    brier_map = competence.get("brier", {})
+
+    for model in model_names:
+        ece_arr = ece_map.get(model)
+        brier_arr = brier_map.get(model)
+        if not isinstance(ece_arr, list) or bin_id >= len(ece_arr):
+            continue
+        if not isinstance(brier_arr, list) or bin_id >= len(brier_arr):
+            continue
+
+        ece_val = ece_arr[bin_id]
+        brier_val = brier_arr[bin_id]
+
+        if ece_val is None:
+            continue
+        if isinstance(ece_val, float) and math.isnan(ece_val):
+            continue
+        if brier_val is None or (isinstance(brier_val, float) and math.isnan(brier_val)):
+            brier_val = float("inf")
+
+        available.append((model, float(ece_val), float(brier_val)))
+
+    if not available:
+        return {"winner": fallback_model, "bin_id": bin_id, "p_avg": p_avg}
+
+    winner = min(available, key=lambda x: (x[1], x[2]))[0]
+    return {"winner": winner, "bin_id": bin_id, "p_avg": p_avg}
 
 
 def aggregate_metric_mean(items: List[MetricDict]) -> Dict[str, float]:

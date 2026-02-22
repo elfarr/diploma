@@ -1,0 +1,10 @@
+{
+  "class": "high",
+  "p_cal": 0.7493549021143564,
+  "model_used": "catboost",
+  "bin_id": 3,
+  "thresholds": {
+    "t_low": 0.45,
+    "t_high": 0.65
+  }
+}

@@ -11,10 +11,13 @@ app = appmod.app
 
 
 def make_full_payload():
-    feats = {
-        name: (rng.low + rng.high) / 2
-        for name, rng in appmod.RANGES.items()
-    }
+    feats = {}
+    for name in appmod.FEATURE_ORDER:
+        rng = appmod.RANGES.get(name)
+        if rng is None:
+            feats[name] = 0.0
+        else:
+            feats[name] = (rng.low + rng.high) / 2
     return {"features": feats, "unit_convert": False}
 
 

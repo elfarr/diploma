@@ -1,0 +1,10 @@
+{
+  "class": "undetermined",
+  "p_cal": 0.6,
+  "model_used": "svm_rbf",
+  "bin_id": 4,
+  "thresholds": {
+    "t_low": 0.45,
+    "t_high": 0.65
+  }
+}

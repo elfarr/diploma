@@ -1,9 +1,10 @@
-import time
+﻿import time
 import json
 import inspect
 import functools
 from pathlib import Path
-from fastapi import FastAPI, Depends, Request, Response, HTTPException
+import joblib
+from fastapi import FastAPI, Depends, Response, HTTPException
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Summary, Histogram, Counter
 from starlette.responses import PlainTextResponse
@@ -19,6 +20,7 @@ from .services.predictor import (
     BadInputError,
 )
 from .models.onnx_runtime import OnnxModel
+from .schemas.request import PredictRequest
 from .utils.validators import RangeSpec
 
 registry = CollectorRegistry()
@@ -37,43 +39,57 @@ MODEL_CATALOG = [
 ]
 
 
-def _load_thresholds(model_dir: Path) -> dict:
-    thr_path = model_dir / "thresholds.json"
-    if thr_path.exists():
-        try:
-            data = json.loads(thr_path.read_text(encoding="utf-8"))
-            return {
-                "t_low": float(data.get("t_low", settings.T_LOW)),
-                "t_high": float(data.get("t_high", settings.T_HIGH)),
-            }
-        except Exception:
-            pass
-    return {"t_low": settings.T_LOW, "t_high": settings.T_HIGH}
-
-
 def _init_predictor() -> None:
     global FEATURE_ORDER, RANGES, PRED, THRESHOLDS
     model_dir = Path(settings.MODEL_DIR)
     FEATURE_ORDER, ranges_raw, _units = load_signature(model_dir / "signature.json")
     RANGES = {name: RangeSpec(low=spec["low"], high=spec["high"]) for name, spec in ranges_raw.items()}
-    THRESHOLDS = _load_thresholds(model_dir)
 
-    onnx_path = model_dir / "model.onnx"
-    if not onnx_path.exists():
-        onnx_path = model_dir / "onnx" / "model.onnx"
+    model_by_name = {}
 
-    model = OnnxModel.load(str(onnx_path))
+    for model_name in ("svm_rbf", "mlp"):
+        model_path = model_dir / f"model_{model_name}.pkl"
+        if not model_path.exists():
+            raise RuntimeError()
+        model_by_name[model_name] = joblib.load(model_path)
+
+    cat_model_path = model_dir / "model_catboost.pkl"
+    if cat_model_path.exists():
+        try:
+            model_by_name["catboost"] = joblib.load(cat_model_path)
+        except ModuleNotFoundError:
+            cat_onnx_candidates = [
+                model_dir / "model_catboost.onnx",
+                model_dir / "model.onnx",
+                model_dir / "onnx" / "model.onnx",
+            ]
+            cat_onnx = next((p for p in cat_onnx_candidates if p.exists()), None)
+            if cat_onnx is None:
+                raise RuntimeError()
+            model_by_name["catboost"] = OnnxModel.load(str(cat_onnx))
+    else:
+        cat_onnx_candidates = [
+            model_dir / "model_catboost.onnx",
+            model_dir / "model.onnx",
+            model_dir / "onnx" / "model.onnx",
+        ]
+        cat_onnx = next((p for p in cat_onnx_candidates if p.exists()), None)
+        if cat_onnx is None:
+            raise RuntimeError()
+        model_by_name["catboost"] = OnnxModel.load(str(cat_onnx))
     PRED = PredictorService(
-        onnx_model=model,
+        model_by_name=model_by_name,
         feature_order=FEATURE_ORDER,
         ranges=RANGES,
-        t_low=THRESHOLDS["t_low"],
-        t_high=THRESHOLDS["t_high"],
+        model_dir=model_dir,
+        default_t_low=settings.T_LOW,
+        default_t_high=settings.T_HIGH,
         mu=None,
         inv_cov=None,
         ood_threshold=None,
         calib=None,
     )
+    THRESHOLDS = {"t_low": PRED.t_low, "t_high": PRED.t_high}
 
 
 try:
@@ -132,17 +148,13 @@ async def meta(response: Response):
 
 @app.post("/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
 @instrument("/predict", "POST")
-async def predict(request: Request, response: Response):
+async def predict(payload: PredictRequest, response: Response):
     if PRED is None:
-        raise HTTPException(status_code=503, detail="Предиктор недоступен")
+        raise HTTPException(status_code=503)
 
     add_version_headers(response)
-    payload = await request.json()
-    feats = payload.get("features", {})
-    if not isinstance(feats, dict):
-        return JSONResponse(status_code=400, content={"error": "Некорректный формат features"})
-
-    unit_convert = bool(payload.get("unit_convert", settings.UNIT_CONVERT_DEFAULT))
+    feats = payload.features
+    unit_convert = bool(payload.unit_convert)
     try:
         out, timing_ms = PRED.predict(feats, unit_convert)
     except MissingFeatureError as e:
@@ -150,23 +162,34 @@ async def predict(request: Request, response: Response):
     except BadInputError as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
     except Exception:
-        return JSONResponse(status_code=500, content={"error": "Не удалось выполнить инференс"})
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
     PRED_COUNT.labels(out.get("class", "unknown")).inc()
     undetermined = out.get("class") == "undetermined"
 
-    models = [
-        {
-            "model_name": model["model_name"],
-            "model_version": model["model_version"],
-            "proba": out.get("p_cal"),
-            "calibrated": out.get("p_cal") is not None,
-            "calibration_method": "platt" if out.get("p_cal") is not None else None,
-            "undetermined": undetermined,
-        }
-        for model in MODEL_CATALOG
-    ]
-    ensemble_proba = sum(m["proba"] for m in models) / len(models)
+    model_proba_map = {
+        "svm_rbf": out.get("p_svm"),
+        "catboost": out.get("p_cat"),
+        "mlp": out.get("p_mlp"),
+    }
+    calibration_method_map = out.get("calibration_by_model", {})
+    models = []
+    for model in MODEL_CATALOG:
+        model_name = model["model_name"]
+        model_proba = model_proba_map.get(model_name)
+        calibration_method = calibration_method_map.get(model_name)
+        models.append(
+            {
+                "model_name": model_name,
+                "model_version": model["model_version"],
+                "proba": model_proba,
+                "calibrated": model_proba is not None,
+                "calibration_method": calibration_method,
+                "undetermined": undetermined,
+            }
+        )
+    valid_probas = [m["proba"] for m in models if m["proba"] is not None]
+    ensemble_proba = sum(valid_probas) / len(valid_probas) if valid_probas else None
 
     return {
         "models": models,
@@ -177,7 +200,16 @@ async def predict(request: Request, response: Response):
         "explain": out.get("explain", []),
         "class": out.get("class"),
         "p_raw": out.get("p_raw"),
+        "p_raw_svm": out.get("p_raw_svm"),
+        "p_raw_cat": out.get("p_raw_cat"),
+        "p_raw_mlp": out.get("p_raw_mlp"),
+        "p_svm": out.get("p_svm"),
+        "p_cat": out.get("p_cat"),
+        "p_mlp": out.get("p_mlp"),
         "p_cal": out.get("p_cal"),
+        "model_used": out.get("model_used"),
+        "bin_id": out.get("bin_id"),
+        "undetermined": out.get("undetermined"),
         "confidence": out.get("confidence"),
         "thresholds": out.get("thresholds"),
         "ood": out.get("ood"),
@@ -195,3 +227,4 @@ async def reload_model(response: Response):
     add_version_headers(response)
     _init_predictor()
     return {"reloaded": PRED is not None, "model_version": settings.MODEL_VERSION}
+

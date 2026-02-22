@@ -1,0 +1,35 @@
+{
+  "low": {
+    "row_idx": 8,
+    "class": "low",
+    "p_cal": 0.2222222222222222,
+    "model_used": "svm_rbf",
+    "bin_id": 4,
+    "thresholds": {
+      "t_low": 0.45,
+      "t_high": 0.65
+    }
+  },
+  "undetermined": {
+    "row_idx": 92,
+    "class": "undetermined",
+    "p_cal": 0.6,
+    "model_used": "svm_rbf",
+    "bin_id": 4,
+    "thresholds": {
+      "t_low": 0.45,
+      "t_high": 0.65
+    }
+  },
+  "high": {
+    "row_idx": 0,
+    "class": "high",
+    "p_cal": 0.7493549021143564,
+    "model_used": "catboost",
+    "bin_id": 3,
+    "thresholds": {
+      "t_low": 0.45,
+      "t_high": 0.65
+    }
+  }
+}
