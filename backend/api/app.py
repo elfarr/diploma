@@ -54,29 +54,14 @@ def _init_predictor() -> None:
         model_by_name[model_name] = joblib.load(model_path)
 
     cat_model_path = model_dir / "model_catboost.pkl"
+    cat_onnx_path = model_dir / "model_catboost.onnx"
     if cat_model_path.exists():
         try:
             model_by_name["catboost"] = joblib.load(cat_model_path)
         except ModuleNotFoundError:
-            cat_onnx_candidates = [
-                model_dir / "model_catboost.onnx",
-                model_dir / "model.onnx",
-                model_dir / "onnx" / "model.onnx",
-            ]
-            cat_onnx = next((p for p in cat_onnx_candidates if p.exists()), None)
-            if cat_onnx is None:
-                raise RuntimeError()
-            model_by_name["catboost"] = OnnxModel.load(str(cat_onnx))
+            model_by_name["catboost"] = OnnxModel.load(str(cat_onnx_path))
     else:
-        cat_onnx_candidates = [
-            model_dir / "model_catboost.onnx",
-            model_dir / "model.onnx",
-            model_dir / "onnx" / "model.onnx",
-        ]
-        cat_onnx = next((p for p in cat_onnx_candidates if p.exists()), None)
-        if cat_onnx is None:
-            raise RuntimeError()
-        model_by_name["catboost"] = OnnxModel.load(str(cat_onnx))
+        model_by_name["catboost"] = OnnxModel.load(str(cat_onnx_path))
     PRED = PredictorService(
         model_by_name=model_by_name,
         feature_order=FEATURE_ORDER,
@@ -227,4 +212,3 @@ async def reload_model(response: Response):
     add_version_headers(response)
     _init_predictor()
     return {"reloaded": PRED is not None, "model_version": settings.MODEL_VERSION}
-

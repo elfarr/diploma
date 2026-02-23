@@ -119,39 +119,23 @@ def load_artifacts(model_dir: str | Path, default_t_low: float, default_t_high: 
         except Exception:
             pass
 
-    competence_candidates = [
-        model_path / "competence_by_risk_bin.json",
-        Path(__file__).resolve().parents[3] / "models" / "v2.0.0" / "competence_by_risk_bin.json",
-    ]
-    for p in competence_candidates:
-        if not p.exists():
-            continue
+    competence_path = model_path / "competence_by_risk_bin.json"
+    if competence_path.exists():
         try:
-            competence = json.loads(p.read_text(encoding="utf-8"))
-            break
-        except Exception:
-            continue
+            competence = json.loads(competence_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            raise RuntimeError() from exc
+    else:
+        raise FileNotFoundError()
 
     calibrations: Dict[str, Dict[str, Any]] = {}
     model_names = ("svm_rbf", "catboost", "mlp")
-    calibration_candidates = [
-        model_path,
-        Path(__file__).resolve().parents[3] / "models" / "v2.0.0",
-    ]
     for model_name in model_names:
-        loaded = False
-        for root in calibration_candidates:
-            cpath = root / f"calib_{model_name}.json"
-            if not cpath.exists():
-                continue
-            try:
-                calibrations[model_name] = json.loads(cpath.read_text(encoding="utf-8"))
-                loaded = True
-                break
-            except Exception:
-                continue
-        if not loaded:
-            calibrations[model_name] = {}
+        cpath = model_path / f"calib_{model_name}.json"
+        try:
+            calibrations[model_name] = json.loads(cpath.read_text(encoding="utf-8"))
+        except Exception as exc:
+            raise RuntimeError() from exc
 
     return {"thresholds": thresholds, "competence": competence, "calibrations": calibrations}
 
@@ -283,10 +267,6 @@ class PredictorService:
                 numeric_feats[f] = float(feats[f])
             except (TypeError, ValueError):
                 raise BadInputError()
-
-        missing = [f for f in self.feature_order if f not in feats]
-        if missing:
-            raise MissingFeatureError(f"Отсутствуют обязательные признаки: {missing}")
 
         try:
             validate_ranges(numeric_feats, self.ranges)

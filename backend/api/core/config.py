@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     API_TOKEN: str = "dev-secret-token" 
     MODEL_DIR: str = "backend/models/v2.0.0"
     MODEL_VERSION: str = "v2.0.0"
-    SCHEMA_VERSION: str = "kstar_10"
+    SCHEMA_VERSION: str = "kstar_30"
     T_LOW: float = 0.35
     T_HIGH: float = 0.65
     UNIT_CONVERT_DEFAULT: bool = False
