@@ -1,0 +1,5 @@
+{
+  "t_low": 0.4,
+  "t_high": 0.5,
+  "source_model": "catboost"
+}

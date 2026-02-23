@@ -117,21 +117,11 @@ def compute_ece(y_true: Sequence[int], p_cal: Sequence[float], n_bins: int = 10)
     return float(ece)
 
 
-def assign_decile_bins_with_fallback(p_cal: Iterable[float]) -> tuple[pd.Series, str]:
+def assign_fixed_probability_bins(p_cal: Iterable[float], n_bins: int = 10) -> tuple[pd.Series, str]:
     p_series = pd.Series(p_cal).astype(float)
-    if p_series.isna().any():
-        raise ValueError()
-    if (p_series < 0).any() or (p_series > 1).any():
-        raise ValueError()
-
-    q_bins = pd.qcut(p_series, q=10, labels=False, duplicates="drop")
-    n_unique_bins = int(pd.Series(q_bins).nunique(dropna=True))
-    if n_unique_bins == 10:
-        return pd.Series(q_bins, index=p_series.index, dtype=int), "qcut"
-
-    fixed_bins = np.floor(p_series.to_numpy() * 10).astype(int)
-    fixed_bins = np.clip(fixed_bins, 0, 9)
-    return pd.Series(fixed_bins, index=p_series.index, dtype=int), "fixed_0.1"
+    fixed_bins = np.floor(p_series.to_numpy() * n_bins).astype(int)
+    fixed_bins = np.clip(fixed_bins, 0, n_bins - 1)
+    return pd.Series(fixed_bins, index=p_series.index, dtype=int), f"fixed_{1.0 / n_bins:.1f}"
 
 
 def compute_bin_metrics_table(
@@ -146,7 +136,7 @@ def compute_bin_metrics_table(
         raise ValueError()
 
     y_bin = to_binary_target(y_series)
-    bins, binning_mode = assign_decile_bins_with_fallback(p_series)
+    bins, binning_mode = assign_fixed_probability_bins(p_series, n_bins=10)
 
     tmp = pd.DataFrame({"y_true": y_bin, "p_cal": p_series, "bin": bins})
     n_total = len(tmp)
@@ -562,19 +552,17 @@ def run_model_nested_cv(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Запуск вложенной кросс-валидации для SVM/CatBoost/MLP с калибровкой")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--data", required=True, type=Path, help="Путь к файлу датасета")
     parser.add_argument(
         "--config_features",
         default=Path("configs/kstar_features.json"),
         type=Path,
-        help="Путь к JSON с признаками и целевой переменной",
     )
     parser.add_argument(
         "--config_grids",
         default=Path("configs/grids.yaml"),
         type=Path,
-        help="Путь к YAML с сетками гиперпараметров",
     )
     args = parser.parse_args()
 
