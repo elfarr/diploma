@@ -4,7 +4,7 @@ import inspect
 import functools
 from pathlib import Path
 import joblib
-from fastapi import FastAPI, Depends, Response, HTTPException
+from fastapi import FastAPI, Depends, Response, HTTPException, Request
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Summary, Histogram, Counter
 from starlette.responses import PlainTextResponse
@@ -24,7 +24,7 @@ from .schemas.request import PredictRequest
 from .utils.validators import RangeSpec
 
 registry = CollectorRegistry()
-REQ_COUNT = Counter("api_requests_total", "Total requests", ["path", "method", "code"], registry=registry)
+REQ_COUNT = Counter("api_requests_total", "Total requests", ["path"], registry=registry)
 REQ_LATENCY = Histogram("api_request_latency_seconds", "Request latency", ["path", "method"], registry=registry)
 PRED_COUNT = Counter("api_predict_total", "Total predictions", ["class"], registry=registry)
 
@@ -89,17 +89,10 @@ def instrument(path_template: str, method: str):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             start = time.perf_counter()
-            code = "200"
             try:
-                resp = await func(*args, **kwargs)
-                code = str(getattr(resp, "status_code", 200))
-                return resp
-            except HTTPException as e:
-                code = str(e.status_code)
-                raise
+                return await func(*args, **kwargs)
             finally:
                 dur = time.perf_counter() - start
-                REQ_COUNT.labels(path_template, method, code).inc()
                 REQ_LATENCY.labels(path_template, method).observe(dur)
         wrapper.__signature__ = inspect.signature(func)
         return wrapper
@@ -108,11 +101,18 @@ def instrument(path_template: str, method: str):
 app = FastAPI(title=settings.APP_NAME)
 app.add_middleware(RequestIDMiddleware)
 
+@app.middleware("http")
+async def prometheus_request_counter(request: Request, call_next):
+    try:
+        return await call_next(request)
+    finally:
+        REQ_COUNT.labels(request.url.path).inc()
+
 @app.get("/healthz")
 @instrument("/healthz", "GET")
 async def healthz(response: Response):
     add_version_headers(response)
-    return {"status": "ok", "model_version": settings.MODEL_VERSION}
+    return {"status": "ok"}
 
 @app.get("/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
 @instrument("/meta", "GET")
