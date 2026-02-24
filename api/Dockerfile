@@ -15,13 +15,12 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /app/requirements.txt \
     && pip install --no-cache-dir \
         fastapi \
-        "uvicorn[standard]" \
+        uvicorn \
         pydantic \
         pydantic-settings \
         python-dotenv \
         joblib \
         numpy \
-        pandas \
         onnxruntime
 
 COPY backend/__init__.py /app/backend/__init__.py
