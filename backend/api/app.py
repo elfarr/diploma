@@ -4,9 +4,10 @@ import inspect
 import functools
 from pathlib import Path
 import joblib
-from fastapi import FastAPI, Depends, Response, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Summary, Histogram, Counter
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Histogram, Counter
 from starlette.responses import PlainTextResponse
 from src.api.meta import build_meta_payload
 from .core.config import settings
@@ -24,8 +25,8 @@ from .schemas.request import PredictRequest
 from .utils.validators import RangeSpec
 
 registry = CollectorRegistry()
-REQ_COUNT = Counter("api_requests_total", "Total requests", ["path"], registry=registry)
-REQ_LATENCY = Histogram("api_request_latency_seconds", "Request latency", ["path", "method"], registry=registry)
+REQ_COUNT = Counter("http_requests_total", "HTTP requests total", ["method", "path", "status"], registry=registry)
+REQ_LATENCY = Histogram("http_request_duration_seconds", "HTTP request duration in seconds", ["method", "path"], registry=registry)
 PRED_COUNT = Counter("api_predict_total", "Total predictions", ["class"], registry=registry)
 
 FEATURE_ORDER = []
@@ -88,36 +89,58 @@ def instrument(path_template: str, method: str):
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            start = time.perf_counter()
-            try:
-                return await func(*args, **kwargs)
-            finally:
-                dur = time.perf_counter() - start
-                REQ_LATENCY.labels(path_template, method).observe(dur)
+            return await func(*args, **kwargs)
         wrapper.__signature__ = inspect.signature(func)
         return wrapper
     return decorator
 
 app = FastAPI(title=settings.APP_NAME)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+)
+
+def _metrics_path_label(request: Request) -> str:
+    route = request.scope.get("route")
+    route_path = getattr(route, "path", None)
+    return route_path or request.url.path
+
 
 @app.middleware("http")
-async def prometheus_request_counter(request: Request, call_next):
-    try:
+async def prometheus_http_metrics(request: Request, call_next):
+    if request.url.path == "/metrics":
         return await call_next(request)
+
+    start = time.perf_counter()
+    status_code = "500"
+    try:
+        response = await call_next(request)
+        status_code = str(getattr(response, "status_code", 200))
+        return response
     finally:
-        REQ_COUNT.labels(request.url.path).inc()
+        duration = time.perf_counter() - start
+        path_label = _metrics_path_label(request)
+        REQ_COUNT.labels(request.method, path_label, status_code).inc()
+        REQ_LATENCY.labels(request.method, path_label).observe(duration)
+
+@app.middleware("http")
+async def version_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    add_version_headers(response)
+    return response
 
 @app.get("/healthz")
 @instrument("/healthz", "GET")
-async def healthz(response: Response):
-    add_version_headers(response)
+async def healthz():
     return {"status": "ok"}
 
 @app.get("/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
 @instrument("/meta", "GET")
-async def meta(response: Response):
-    add_version_headers(response)
+async def meta():
     ranges = {
         name: {"low": spec.low, "high": spec.high}
         for name, spec in RANGES.items()
@@ -133,11 +156,9 @@ async def meta(response: Response):
 
 @app.post("/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
 @instrument("/predict", "POST")
-async def predict(payload: PredictRequest, response: Response):
+async def predict(payload: PredictRequest):
     if PRED is None:
         raise HTTPException(status_code=503)
-
-    add_version_headers(response)
     feats = payload.features
     unit_convert = bool(payload.unit_convert)
     try:
@@ -208,7 +229,6 @@ async def metrics():
     return PlainTextResponse(generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/admin/reload", dependencies=[Depends(auth_bearer)])
-async def reload_model(response: Response):
-    add_version_headers(response)
+async def reload_model():
     _init_predictor()
     return {"reloaded": PRED is not None, "model_version": settings.MODEL_VERSION}

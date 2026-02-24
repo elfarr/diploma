@@ -7,11 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_NAME: str = "RiskAPI"
     ENV: str = "dev"
+    CORS_ORIGINS: str = "http://localhost:5173"
     DEV_BEARER: str = "secret"
-    API_TOKEN: str = "dev-secret-token" 
+    API_TOKEN: str = ""
     MODEL_DIR: str = "backend/models/v2.0.0"
-    MODEL_VERSION: str = "v2.0.0"
-    SCHEMA_VERSION: str = "kstar_30"
+    MODEL_VERSION: str = "dev"
+    SCHEMA_VERSION: str = "1"
     T_LOW: float = 0.35
     T_HIGH: float = 0.65
     UNIT_CONVERT_DEFAULT: bool = False
@@ -29,6 +30,13 @@ class Settings(BaseSettings):
     @property
     def env(self):  
         return self.ENV
+
+    @property
+    def cors_origins(self) -> List[str]:
+        raw = (self.CORS_ORIGINS or "").strip()
+        if not raw:
+            return ["http://localhost:5173"]
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     @property
     def dev_bearer(self):  
