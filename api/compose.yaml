@@ -1,8 +1,8 @@
 services:
   risk-api:
     build:
-      context: ..
-      dockerfile: api/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     image: risk-api:latest
     env_file:
       - .env.prod.example

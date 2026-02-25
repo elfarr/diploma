@@ -7,10 +7,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_NAME: str = "RiskAPI"
     ENV: str = "dev"
-    CORS_ORIGINS: str = "http://localhost:5173"
+    CORS_ORIGINS: str = ""
     DEV_BEARER: str = "secret"
     API_TOKEN: str = ""
-    MODEL_DIR: str = "backend/models/v2.0.0"
+    MODEL_DIR: str = "models/v2.0.0"
     MODEL_VERSION: str = "dev"
     SCHEMA_VERSION: str = "1"
     T_LOW: float = 0.35
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     def cors_origins(self) -> List[str]:
         raw = (self.CORS_ORIGINS or "").strip()
         if not raw:
-            return ["http://localhost:5173"]
+            return []
         return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     @property
@@ -48,7 +48,11 @@ class Settings(BaseSettings):
 
     @property
     def model_dir(self):  
-        return self.MODEL_DIR
+        p = Path(self.MODEL_DIR)
+        if p.is_absolute():
+            return str(p)
+        backend_root = Path(__file__).resolve().parents[2]
+        return str((backend_root / p).resolve())
 
     @property
     def model_version(self): 

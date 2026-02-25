@@ -23,10 +23,10 @@ RUN pip install --no-cache-dir --upgrade pip \
         numpy \
         onnxruntime
 
-COPY backend/__init__.py /app/backend/__init__.py
-COPY backend/api /app/backend/api
-COPY backend/models /app/backend/models
-COPY src /app/src
+COPY app/backend/__init__.py /app/backend/__init__.py
+COPY app/backend/api /app/backend/api
+COPY app/backend/models /app/backend/models
+COPY app/src /app/src
 
 EXPOSE 8080
 

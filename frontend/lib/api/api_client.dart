@@ -52,11 +52,11 @@ class ApiClient {
   final Dio _dio;
 
   Future<Response<Map<String, dynamic>>> getMeta() {
-    return _dio.get<Map<String, dynamic>>('/meta');
+    return _dio.get<Map<String, dynamic>>('/api/meta');
   }
 
   Future<Response<Map<String, dynamic>>> postPredict(
       Map<String, dynamic> body) {
-    return _dio.post<Map<String, dynamic>>('/predict', data: body);
+    return _dio.post<Map<String, dynamic>>('/api/predict', data: body);
   }
 }

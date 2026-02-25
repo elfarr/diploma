@@ -5,7 +5,7 @@ import functools
 from pathlib import Path
 import joblib
 from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Histogram, Counter
 from starlette.responses import PlainTextResponse
@@ -38,11 +38,12 @@ MODEL_CATALOG = [
     {"model_name": "catboost", "model_version": settings.MODEL_VERSION},
     {"model_name": "mlp", "model_version": settings.MODEL_VERSION},
 ]
+STATIC_DIR = Path("/app/static")
 
 
 def _init_predictor() -> None:
     global FEATURE_ORDER, RANGES, PRED, THRESHOLDS
-    model_dir = Path(settings.MODEL_DIR)
+    model_dir = Path(settings.model_dir)
     FEATURE_ORDER, ranges_raw, _units = load_signature(model_dir / "signature.json")
     RANGES = {name: RangeSpec(low=spec["low"], high=spec["high"]) for name, spec in ranges_raw.items()}
 
@@ -96,13 +97,14 @@ def instrument(path_template: str, method: str):
 
 app = FastAPI(title=settings.APP_NAME)
 app.add_middleware(RequestIDMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-)
+if settings.cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Model-Version"],
+    )
 
 def _metrics_path_label(request: Request) -> str:
     route = request.scope.get("route")
@@ -138,8 +140,8 @@ async def version_headers_middleware(request: Request, call_next):
 async def healthz():
     return {"status": "ok"}
 
-@app.get("/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
-@instrument("/meta", "GET")
+@app.get("/api/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
+@instrument("/api/meta", "GET")
 async def meta():
     ranges = {
         name: {"low": spec.low, "high": spec.high}
@@ -154,8 +156,8 @@ async def meta():
         ranges=ranges,
     )
 
-@app.post("/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
-@instrument("/predict", "POST")
+@app.post("/api/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
+@instrument("/api/predict", "POST")
 async def predict(payload: PredictRequest):
     if PRED is None:
         raise HTTPException(status_code=503)
@@ -228,7 +230,35 @@ async def predict(payload: PredictRequest):
 async def metrics():
     return PlainTextResponse(generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
 
-@app.post("/admin/reload", dependencies=[Depends(auth_bearer)])
+@app.post("/api/admin/reload", dependencies=[Depends(auth_bearer)])
 async def reload_model():
     _init_predictor()
     return {"reloaded": PRED is not None, "model_version": settings.MODEL_VERSION}
+
+
+def _safe_static_path(full_path: str) -> Path | None:
+    candidate = (STATIC_DIR / full_path.lstrip("/")).resolve()
+    try:
+        candidate.relative_to(STATIC_DIR.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+@app.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+async def spa_fallback(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    if full_path in {"healthz", "metrics"}:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    static_path = _safe_static_path(full_path)
+    if static_path and static_path.is_file():
+        return FileResponse(static_path)
+
+    index_path = STATIC_DIR / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+
+    raise HTTPException(status_code=404)

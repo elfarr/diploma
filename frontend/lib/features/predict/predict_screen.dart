@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../api/api_client.dart';
@@ -139,12 +140,12 @@ class PredictScreen extends StatefulWidget {
 
 class _PredictScreenState extends State<PredictScreen> {
   final _baseUrls = const [
-    'http://10.0.2.2:8000',
-    'http://127.0.0.1:8000',
+    'http://localhost:8081',
+    'http://10.0.2.2:8081',
   ];
 
-  static const _defaultToken = 'secret';
-  String _baseUrl = 'http://10.0.2.2:8000';
+  static const _defaultToken = 'change-me';
+  late String _baseUrl;
   String _modelVersion = 'v2.0.0';
   String _token = _defaultToken;
   bool _unitConvert = false;
@@ -159,6 +160,12 @@ class _PredictScreenState extends State<PredictScreen> {
   PredictResponse? _last;
   String? _error;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _baseUrl = kIsWeb ? Uri.base.origin : 'http://10.0.2.2:8081';
+  }
 
   @override
   void dispose() {

@@ -20,3 +20,7 @@ artifacts/
 catboost_info/
 reports/
 tests/
+app/
+api/app/backend/api/tests/
+frontend/.dart_tool/
+frontend/build/
