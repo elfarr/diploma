@@ -35,3 +35,12 @@ async def auth_bearer(
     if token != api_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     return True
+
+
+async def auth_bearer_unless_demo_enabled(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    authorization: Optional[str] = Header(default=None),
+):
+    if settings.demo_enabled:
+        return True
+    return await auth_bearer(credentials=credentials, authorization=authorization)

@@ -6,4 +6,6 @@ python-dotenv
 numpy
 joblib
 onnxruntime
-prometheus_client   
+prometheus_client
+scikit-learn==1.4.2
+pandas

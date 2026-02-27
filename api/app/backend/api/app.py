@@ -1,28 +1,31 @@
-﻿import time
-import json
+﻿import functools
 import inspect
-import functools
+import logging
+import threading
+import time
+from collections import defaultdict, deque
 from pathlib import Path
+
 import joblib
-from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, Histogram, Counter
+from fastapi.responses import FileResponse, JSONResponse
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
 from starlette.responses import PlainTextResponse
+
 from src.api.meta import build_meta_payload
+
+from .auth.deps import auth_bearer, auth_bearer_unless_demo_enabled
 from .core.config import settings
-from .core.versioning import add_version_headers, enforce_model_version
 from .core.middleware.request_id import RequestIDMiddleware
-from .auth.deps import auth_bearer
-from .services.predictor import (
-    load_signature,
-    PredictorService,
-    MissingFeatureError,
-    BadInputError,
-)
+from .core.versioning import add_version_headers, enforce_model_version
 from .models.onnx_runtime import OnnxModel
 from .schemas.request import PredictRequest
+from .services.predictor import BadInputError, MissingFeatureError, PredictorService, load_signature
 from .utils.validators import RangeSpec
+
+logger = logging.getLogger(__name__)
+demo_logger = logging.getLogger("backend.api.demo")
 
 registry = CollectorRegistry()
 REQ_COUNT = Counter("http_requests_total", "HTTP requests total", ["method", "path", "status"], registry=registry)
@@ -40,6 +43,11 @@ MODEL_CATALOG = [
 ]
 STATIC_DIR = Path("/app/static")
 
+DEMO_RATE_LIMIT = 20
+DEMO_RATE_PERIOD_SECONDS = 5 * 60
+_demo_rate_hits = defaultdict(deque)
+_demo_rate_lock = threading.Lock()
+
 
 def _init_predictor() -> None:
     global FEATURE_ORDER, RANGES, PRED, THRESHOLDS
@@ -56,7 +64,12 @@ def _init_predictor() -> None:
         model_by_name[model_name] = joblib.load(model_path)
 
     cat_model_path = model_dir / "model_catboost.pkl"
-    cat_onnx_path = model_dir / "model_catboost.onnx"
+    cat_onnx_candidates = [
+        model_dir / "model_catboost.onnx",
+        model_dir / "model.onnx",
+        model_dir / "onnx" / "model.onnx",
+    ]
+    cat_onnx_path = next((p for p in cat_onnx_candidates if p.exists()), None)
     if cat_model_path.exists():
         try:
             model_by_name["catboost"] = joblib.load(cat_model_path)
@@ -86,14 +99,18 @@ except Exception:
     RANGES = {}
     PRED = None
 
+
 def instrument(path_template: str, method: str):
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             return await func(*args, **kwargs)
+
         wrapper.__signature__ = inspect.signature(func)
         return wrapper
+
     return decorator
+
 
 app = FastAPI(title=settings.APP_NAME)
 app.add_middleware(RequestIDMiddleware)
@@ -106,73 +123,35 @@ if settings.cors_origins:
         allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Model-Version"],
     )
 
+
 def _metrics_path_label(request: Request) -> str:
     route = request.scope.get("route")
     route_path = getattr(route, "path", None)
     return route_path or request.url.path
 
 
-@app.middleware("http")
-async def prometheus_http_metrics(request: Request, call_next):
-    if request.url.path == "/metrics":
-        return await call_next(request)
+def _get_request_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
 
-    start = time.perf_counter()
-    status_code = "500"
-    try:
-        response = await call_next(request)
-        status_code = str(getattr(response, "status_code", 200))
-        return response
-    finally:
-        duration = time.perf_counter() - start
-        path_label = _metrics_path_label(request)
-        REQ_COUNT.labels(request.method, path_label, status_code).inc()
-        REQ_LATENCY.labels(request.method, path_label).observe(duration)
 
-@app.middleware("http")
-async def version_headers_middleware(request: Request, call_next):
-    response = await call_next(request)
-    add_version_headers(response)
-    return response
+def _enforce_demo_rate_limit(ip: str) -> None:
+    now = time.time()
+    cutoff = now - DEMO_RATE_PERIOD_SECONDS
+    with _demo_rate_lock:
+        hits = _demo_rate_hits[ip]
+        while hits and hits[0] <= cutoff:
+            hits.popleft()
+        if len(hits) >= DEMO_RATE_LIMIT:
+            raise HTTPException(status_code=429)
+        hits.append(now)
 
-@app.get("/healthz")
-@instrument("/healthz", "GET")
-async def healthz():
-    return {"status": "ok"}
 
-@app.get("/api/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
-@instrument("/api/meta", "GET")
-async def meta():
-    ranges = {
-        name: {"low": spec.low, "high": spec.high}
-        for name, spec in RANGES.items()
-    }
-    return build_meta_payload(
-        model_version=settings.MODEL_VERSION,
-        schema_version=settings.SCHEMA_VERSION,
-        thresholds=THRESHOLDS,
-        models=MODEL_CATALOG,
-        features=FEATURE_ORDER,
-        ranges=ranges,
-    )
-
-@app.post("/api/predict", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
-@instrument("/api/predict", "POST")
-async def predict(payload: PredictRequest):
-    if PRED is None:
-        raise HTTPException(status_code=503)
-    feats = payload.features
-    unit_convert = bool(payload.unit_convert)
-    try:
-        out, timing_ms = PRED.predict(feats, unit_convert)
-    except MissingFeatureError as e:
-        return JSONResponse(status_code=422, content={"error": str(e)})
-    except BadInputError as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
-    except Exception:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-    PRED_COUNT.labels(out.get("class", "unknown")).inc()
+def _build_predict_response(out: dict, include_technical_fields: bool) -> dict:
     undetermined = out.get("class") == "undetermined"
 
     model_proba_map = {
@@ -199,7 +178,7 @@ async def predict(payload: PredictRequest):
     valid_probas = [m["proba"] for m in models if m["proba"] is not None]
     ensemble_proba = sum(valid_probas) / len(valid_probas) if valid_probas else None
 
-    return {
+    response = {
         "models": models,
         "ensemble": {
             "proba": ensemble_proba,
@@ -221,14 +200,127 @@ async def predict(payload: PredictRequest):
         "confidence": out.get("confidence"),
         "thresholds": out.get("thresholds"),
         "ood": out.get("ood"),
-        "model_version": out.get("model_version"),
-        "schema_version": out.get("schema_version"),
-        "timing_ms": out.get("timing_ms"),
     }
+    if include_technical_fields:
+        response.update(
+            {
+                "model_version": out.get("model_version"),
+                "schema_version": out.get("schema_version"),
+                "timing_ms": out.get("timing_ms"),
+            }
+        )
+    return response
+
+
+def _run_prediction(payload: PredictRequest, include_technical_fields: bool):
+    if PRED is None:
+        raise HTTPException(status_code=503)
+
+    feats = payload.features
+    unit_convert = bool(payload.unit_convert)
+    try:
+        out, _timing_ms = PRED.predict(feats, unit_convert)
+    except MissingFeatureError as e:
+        return JSONResponse(status_code=422, content={"error": str(e)})
+    except BadInputError as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    except Exception:
+        return JSONResponse(status_code=500)
+
+    PRED_COUNT.labels(out.get("class", "unknown")).inc()
+    return _build_predict_response(out, include_technical_fields=include_technical_fields)
+
+
+@app.middleware("http")
+async def prometheus_http_metrics(request: Request, call_next):
+    if request.url.path == "/metrics":
+        return await call_next(request)
+
+    start = time.perf_counter()
+    status_code = "500"
+    try:
+        response = await call_next(request)
+        status_code = str(getattr(response, "status_code", 200))
+        return response
+    finally:
+        duration = time.perf_counter() - start
+        path_label = _metrics_path_label(request)
+        REQ_COUNT.labels(request.method, path_label, status_code).inc()
+        REQ_LATENCY.labels(request.method, path_label).observe(duration)
+
+
+@app.middleware("http")
+async def version_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    add_version_headers(response)
+    return response
+
+
+@app.get("/healthz")
+@instrument("/healthz", "GET")
+async def healthz():
+    return {"status": "ok"}
+
+
+@app.get("/api/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
+@instrument("/api/meta", "GET")
+async def meta():
+    ranges = {name: {"low": spec.low, "high": spec.high} for name, spec in RANGES.items()}
+    return build_meta_payload(
+        model_version=settings.MODEL_VERSION,
+        schema_version=settings.SCHEMA_VERSION,
+        thresholds=THRESHOLDS,
+        models=MODEL_CATALOG,
+        features=FEATURE_ORDER,
+        ranges=ranges,
+    )
+
+
+@app.post("/api/predict", dependencies=[Depends(auth_bearer_unless_demo_enabled), Depends(enforce_model_version)])
+@instrument("/api/predict", "POST")
+async def predict(payload: PredictRequest):
+    return _run_prediction(payload, include_technical_fields=True)
+
+
+@app.post("/predict", dependencies=[Depends(auth_bearer_unless_demo_enabled), Depends(enforce_model_version)])
+@instrument("/predict", "POST")
+async def predict_compat(payload: PredictRequest):
+    return _run_prediction(payload, include_technical_fields=True)
+
+
+@app.post("/demo/predict")
+@instrument("/demo/predict", "POST")
+async def demo_predict(payload: PredictRequest, request: Request):
+    if not settings.demo_enabled:
+        raise HTTPException(status_code=404)
+
+    ip = _get_request_ip(request)
+    request_id = getattr(request.state, "request_id", "")
+    status = 500
+    t0 = time.perf_counter()
+    try:
+        _enforce_demo_rate_limit(ip)
+        result = _run_prediction(payload, include_technical_fields=False)
+        if isinstance(result, JSONResponse):
+            status = result.status_code
+        else:
+            status = 200
+        return result
+    finally:
+        latency_ms = (time.perf_counter() - t0) * 1000
+        demo_logger.info(
+            "request_id=%s ip=%s status=%s latency_ms=%.2f",
+            request_id,
+            ip,
+            status,
+            latency_ms,
+        )
+
 
 @app.get("/metrics")
 async def metrics():
     return PlainTextResponse(generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
+
 
 @app.post("/api/admin/reload", dependencies=[Depends(auth_bearer)])
 async def reload_model():

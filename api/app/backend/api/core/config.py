@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = ""
     DEV_BEARER: str = "secret"
     API_TOKEN: str = ""
+    DEMO_ENABLED: bool = False
     MODEL_DIR: str = "models/v2.0.0"
     MODEL_VERSION: str = "dev"
     SCHEMA_VERSION: str = "1"
@@ -45,6 +46,10 @@ class Settings(BaseSettings):
     @property
     def api_token(self):  
         return self.API_TOKEN
+
+    @property
+    def demo_enabled(self):
+        return self.DEMO_ENABLED
 
     @property
     def model_dir(self):  
