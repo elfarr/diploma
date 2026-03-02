@@ -1,21 +1,27 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'explain_item.g.dart';
-
-@JsonSerializable()
 class ExplainItem {
   const ExplainItem({
-    required this.feature,
-    required this.impact,
-    required this.direction,
+    required this.name,
+    required this.value,
+    required this.contribution,
   });
 
-  final String feature;
-  final double impact;
-  final String direction;
+  final String name;
+  final double value;
+  final double contribution;
 
-  factory ExplainItem.fromJson(Map<String, dynamic> json) =>
-      _$ExplainItemFromJson(json);
+  factory ExplainItem.fromJson(Map<String, dynamic> json) {
+    return ExplainItem(
+      name: (json['name'] as String?) ?? '',
+      value: (json['value'] as num?)?.toDouble() ?? 0.0,
+      contribution: (json['contribution'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$ExplainItemToJson(this);
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'value': value,
+      'contribution': contribution,
+    };
+  }
 }

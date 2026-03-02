@@ -231,6 +231,28 @@ def _run_prediction(payload: PredictRequest, include_technical_fields: bool):
     return _build_predict_response(out, include_technical_fields=include_technical_fields)
 
 
+async def _parse_predict_payload(http_request: Request):
+    try:
+        raw = await http_request.json()
+    except Exception:
+        return JSONResponse(status_code=400)
+
+    if not isinstance(raw, dict):
+        return JSONResponse(status_code=422)
+
+    if "features" in raw:
+        candidate = raw
+    else:
+        unit_convert = bool(raw.get("unit_convert", False))
+        flat_features = {k: v for k, v in raw.items() if k != "unit_convert"}
+        candidate = {"features": flat_features, "unit_convert": unit_convert}
+
+    try:
+        return PredictRequest.model_validate(candidate)
+    except Exception:
+        return JSONResponse(status_code=422, content={"error": "invalid_payload"})
+
+
 @app.middleware("http")
 async def prometheus_http_metrics(request: Request, call_next):
     if request.url.path == "/metrics":
@@ -278,21 +300,31 @@ async def meta():
 
 @app.post("/api/predict", dependencies=[Depends(auth_bearer_unless_demo_enabled), Depends(enforce_model_version)])
 @instrument("/api/predict", "POST")
-async def predict(payload: PredictRequest):
+async def predict(request: Request):
+    payload = await _parse_predict_payload(request)
+    if isinstance(payload, JSONResponse):
+        return payload
     return _run_prediction(payload, include_technical_fields=True)
 
 
 @app.post("/predict", dependencies=[Depends(auth_bearer_unless_demo_enabled), Depends(enforce_model_version)])
 @instrument("/predict", "POST")
-async def predict_compat(payload: PredictRequest):
+async def predict_compat(request: Request):
+    payload = await _parse_predict_payload(request)
+    if isinstance(payload, JSONResponse):
+        return payload
     return _run_prediction(payload, include_technical_fields=True)
 
 
 @app.post("/demo/predict")
 @instrument("/demo/predict", "POST")
-async def demo_predict(payload: PredictRequest, request: Request):
+async def demo_predict(request: Request):
     if not settings.demo_enabled:
         raise HTTPException(status_code=404)
+
+    payload = await _parse_predict_payload(request)
+    if isinstance(payload, JSONResponse):
+        return payload
 
     ip = _get_request_ip(request)
     request_id = getattr(request.state, "request_id", "")

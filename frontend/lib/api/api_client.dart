@@ -1,62 +1,72 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
 
-import 'api_config.dart';
+import 'package:http/http.dart' as http;
+
+import '../app_env.dart';
+import '../models/predict_request.dart';
+import '../models/predict_response.dart';
+
+class ApiException implements Exception {
+  ApiException(this.statusCode, this.message);
+
+  final int statusCode;
+  final String message;
+
+  @override
+  String toString() => 'ApiException($statusCode): $message';
+}
 
 class ApiClient {
-  ApiClient(this.config)
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: config.baseUrl,
-            connectTimeout: const Duration(seconds: 10),
-            sendTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-            responseType: ResponseType.json,
-          ),
-        ) {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          final headers = <String, Object?>{};
-          if (config.bearerToken != null && config.bearerToken!.isNotEmpty) {
-            headers['Authorization'] = 'Bearer ${config.bearerToken}';
-          }
-          if (config.modelVersion != null && config.modelVersion!.isNotEmpty) {
-            headers['X-Model-Version'] = config.modelVersion;
-          }
-          options.headers.addAll(headers);
+  ApiClient({http.Client? client}) : _client = client ?? http.Client();
 
-          if (kDebugMode) {
-            debugPrint('[API] ${options.method} ${options.uri}');
-          }
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          if (kDebugMode) {
-            debugPrint('[API] ${response.statusCode} ${response.requestOptions.uri}');
-          }
-          handler.next(response);
-        },
-        onError: (dioError, handler) {
-          if (kDebugMode) {
-            debugPrint(
-                '[API] ${dioError.response?.statusCode ?? ''} ${dioError.requestOptions.uri}: ${dioError.message}');
-          }
-          handler.next(dioError);
-        },
-      ),
+  final http.Client _client;
+
+  Future<PredictResponse> predict(PredictRequest request) async {
+    final uri = _buildUri();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (!AppEnv.useProxy) {
+      headers['Authorization'] = 'Bearer ${AppEnv.apiToken}';
+    }
+
+    final response = await _client.post(
+      uri,
+      headers: headers,
+      body: jsonEncode(<String, dynamic>{
+        'features': request.toJson(),
+      }),
     );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = (jsonDecode(response.body) as Map).cast<String, dynamic>();
+      return PredictResponse.fromJson(data);
+    }
+
+    throw ApiException(response.statusCode, _readMessage(response.body));
   }
 
-  final ApiConfig config;
-  final Dio _dio;
-
-  Future<Response<Map<String, dynamic>>> getMeta() {
-    return _dio.get<Map<String, dynamic>>('/api/meta');
+  Uri _buildUri() {
+    if (AppEnv.useProxy) {
+      return Uri.parse('/api/predict');
+    }
+    final base = AppEnv.apiBaseUrl.endsWith('/')
+        ? AppEnv.apiBaseUrl.substring(0, AppEnv.apiBaseUrl.length - 1)
+        : AppEnv.apiBaseUrl;
+    return Uri.parse('$base/predict');
   }
 
-  Future<Response<Map<String, dynamic>>> postPredict(
-      Map<String, dynamic> body) {
-    return _dio.post<Map<String, dynamic>>('/api/predict', data: body);
+  String _readMessage(String body) {
+    try {
+      final decoded = (jsonDecode(body) as Map).cast<String, dynamic>();
+      final message = decoded['message'] ?? decoded['error'] ?? decoded['detail'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    } catch (_) {
+    }
+    return body;
   }
 }

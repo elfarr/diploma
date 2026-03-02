@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../api/api_client.dart';
-import '../../api/api_config.dart';
 import '../../api/predictor_repo.dart';
-import '../../models/meta_response.dart';
 import '../../models/predict_request.dart';
 import '../../models/predict_response.dart';
 import '../../models/explain_item.dart';
@@ -147,7 +145,6 @@ class _PredictScreenState extends State<PredictScreen> {
   static const _defaultToken = 'change-me';
   late String _baseUrl;
   String _modelVersion = 'v2.0.0';
-  String _token = _defaultToken;
   bool _unitConvert = false;
 
   final Map<String, TextEditingController> _controllers = {
@@ -156,7 +153,6 @@ class _PredictScreenState extends State<PredictScreen> {
   };
 
   Map<String, double> _activeVector = Map.of(_lowVector);
-  MetaResponse? _meta;
   PredictResponse? _last;
   String? _error;
   bool _loading = false;
@@ -176,12 +172,7 @@ class _PredictScreenState extends State<PredictScreen> {
   }
 
   PredictorRepo _buildRepo() {
-    final cfg = ApiConfig(
-      baseUrl: _baseUrl,
-      bearerToken: _token,
-      modelVersion: _modelVersion,
-    );
-    return PredictorRepo(ApiClient(cfg));
+    return PredictorRepo(ApiClient());
   }
 
   Future<void> _predict() async {
@@ -193,7 +184,7 @@ class _PredictScreenState extends State<PredictScreen> {
     try {
       final full = _composePayload();
       debugPrint('POST /predict first 6: ${full.entries.take(6).toList()} (total ${full.length})');
-      final resp = await repo.predict(PredictRequest(features: full, unitConvert: _unitConvert));
+      final resp = await repo.predict(PredictRequest(features: full));
       setState(() => _last = resp);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -354,7 +345,7 @@ class _PredictScreenState extends State<PredictScreen> {
   }
 
   Widget _buildResult(PredictResponse resp) {
-    List<ExplainItem> explain = resp.explain ?? [];
+    List<ExplainItem> explain = resp.explain;
     if (explain.length > 5) explain = explain.sublist(0, 5);
 
     return Card(
@@ -363,16 +354,15 @@ class _PredictScreenState extends State<PredictScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Класс: ${resp.classLabel}', style: Theme.of(context).textTheme.titleMedium),
-            Text('p_cal: ${resp.probCal.toStringAsFixed(4)}'),
-            Text('Уверенность: ${resp.confidence.toStringAsFixed(4)}'),
-            if (resp.ood != null) Text('OOD: ${resp.ood}'),
-            if (resp.timingMs != null) Text('Время: ${resp.timingMs} мс'),
-            if (resp.thresholds.isNotEmpty) Text('Пороги: ${resp.thresholds}'),
+            Text('Класс: ${resp.klass ?? '-'}', style: Theme.of(context).textTheme.titleMedium),
+            Text('prob_cal: ${resp.probCal?.toStringAsFixed(4) ?? '-'}'),
+            if (resp.prob != null) Text('prob: ${resp.prob!.toStringAsFixed(4)}'),
+            if (resp.badge != null) Text('badge: ${resp.badge}'),
+            if (resp.undetermined != null) Text('undetermined: ${resp.undetermined}'),
             if (explain.isNotEmpty) const SizedBox(height: 8),
             if (explain.isNotEmpty) const Text('Топ факторов:'),
             ...explain.map(
-              (e) => Text('${e.feature}: ${e.direction} (${e.impact.toStringAsFixed(4)})'),
+              (e) => Text('${e.name}: ${e.value.toStringAsFixed(4)} (${e.contribution.toStringAsFixed(4)})'),
             ),
           ],
         ),

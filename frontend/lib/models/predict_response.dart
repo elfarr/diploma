@@ -1,52 +1,49 @@
-import 'package:json_annotation/json_annotation.dart';
-
 import 'explain_item.dart';
 
-part 'predict_response.g.dart';
-
-@JsonSerializable(explicitToJson: true)
 class PredictResponse {
   const PredictResponse({
-    required this.classLabel,
-    required this.probCal,
-    required this.confidence,
-    required this.thresholds,
-    this.explain,
-    this.ood,
-    this.modelVersion,
-    this.schemaVersion,
-    this.timingMs,
-    this.pRaw,
+    this.klass,
+    this.prob,
+    this.probCal,
+    this.badge,
+    this.undetermined,
+    this.explain = const <ExplainItem>[],
   });
 
-  @JsonKey(name: 'class')
-  final String classLabel;
+  final String? klass;
+  final double? prob;
+  final double? probCal;
+  final String? badge;
+  final bool? undetermined;
+  final List<ExplainItem> explain;
 
-  @JsonKey(name: 'p_cal')
-  final double probCal;
+  factory PredictResponse.fromJson(Map<String, dynamic> json) {
+    final rawExplain = json['explain'];
+    final explainList = rawExplain is List
+        ? rawExplain
+            .whereType<Map<String, dynamic>>()
+            .map(ExplainItem.fromJson)
+            .toList()
+        : <ExplainItem>[];
 
-  final double confidence;
+    return PredictResponse(
+      klass: (json['klass'] as String?) ?? (json['class'] as String?),
+      prob: (json['prob'] as num?)?.toDouble(),
+      probCal: ((json['prob_cal'] ?? json['p_cal']) as num?)?.toDouble(),
+      badge: json['badge'] as String?,
+      undetermined: json['undetermined'] as bool?,
+      explain: explainList,
+    );
+  }
 
-  final Map<String, dynamic> thresholds;
-
-  final List<ExplainItem>? explain;
-
-  final dynamic ood;
-
-  @JsonKey(name: 'model_version')
-  final String? modelVersion;
-
-  @JsonKey(name: 'schema_version')
-  final String? schemaVersion;
-
-  @JsonKey(name: 'timing_ms')
-  final int? timingMs;
-
-  @JsonKey(name: 'p_raw')
-  final double? pRaw;
-
-  factory PredictResponse.fromJson(Map<String, dynamic> json) =>
-      _$PredictResponseFromJson(json);
-
-  Map<String, dynamic> toJson() => _$PredictResponseToJson(this);
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'klass': klass,
+      'prob': prob,
+      'prob_cal': probCal,
+      'badge': badge,
+      'undetermined': undetermined,
+      'explain': explain.map((e) => e.toJson()).toList(),
+    };
+  }
 }
