@@ -19,8 +19,8 @@ class SignatureField {
     return SignatureField(
       name: (json['name'] as String?) ?? '',
       type: (json['type'] as String?) ?? '',
-      min: (json['min'] as num?)?.toDouble(),
-      max: (json['max'] as num?)?.toDouble(),
+      min: _asDouble(json['min']),
+      max: _asDouble(json['max']),
     );
   }
 
@@ -40,11 +40,12 @@ class SignatureSpec {
   final List<SignatureField> fields;
 
   factory SignatureSpec.fromJson(Map<String, dynamic> json) {
-    final rawFields = json['fields'];
+    final rawFields = _extractRawFields(json);
     final fields = rawFields is List
         ? rawFields
             .whereType<Map<String, dynamic>>()
             .map(SignatureField.fromJson)
+            .where((f) => f.name.isNotEmpty)
             .toList()
         : <SignatureField>[];
     return SignatureSpec(fields: fields);
@@ -64,4 +65,33 @@ class SignatureSpec {
     }
     return const SignatureSpec(fields: <SignatureField>[]);
   }
+}
+
+List<dynamic>? _extractRawFields(Map<String, dynamic> json) {
+  final direct = json['fields'];
+  if (direct is List) {
+    return direct;
+  }
+
+  final input = json['input'];
+  if (input is Map<String, dynamic>) {
+    final nested = input['features'];
+    if (nested is List) {
+      return nested;
+    }
+  }
+  return null;
+}
+
+double? _asDouble(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is num) {
+    return value.toDouble();
+  }
+  if (value is String) {
+    return double.tryParse(value);
+  }
+  return null;
 }
