@@ -152,6 +152,39 @@ def confidence(p_cal: float) -> float:
     return abs(p_cal - 0.5)
 
 
+def _build_fallback_explain(
+    feature_order: List[str],
+    numeric_feats: Dict[str, float],
+    ranges: Dict[str, RangeSpec],
+    top_k: int = 5,
+) -> List[Dict[str, float | str]]:
+    scored: List[Tuple[str, float, float]] = []
+    for name in feature_order:
+        if name not in numeric_feats:
+            continue
+        value = float(numeric_feats[name])
+        spec = ranges.get(name)
+        if spec is None:
+            continue
+        width = float(spec.high - spec.low)
+        if width <= 0:
+            continue
+        mid = float((spec.low + spec.high) / 2.0)
+        contribution = (value - mid) / width
+        scored.append((name, value, contribution))
+
+    if not scored:
+        for name in feature_order:
+            if name not in numeric_feats:
+                continue
+            value = float(numeric_feats[name])
+            scored.append((name, value, value))
+
+    scored.sort(key=lambda x: abs(x[2]), reverse=True)
+    top = scored[:top_k]
+    return [{"name": n, "value": v, "contribution": c} for n, v, c in top]
+
+
 class PredictorService:
     def __init__(
         self,
@@ -273,6 +306,12 @@ class PredictorService:
         except ValueError as e:
             raise BadInputError(str(e))
 
+        missing = [f for f in self.feature_order if f not in numeric_feats]
+        if missing:
+            sample = ", ".join(missing[:5])
+            suffix = "..." if len(missing) > 5 else ""
+            raise MissingFeatureError(f"missing_features: {sample}{suffix}")
+
         row = [numeric_feats[f] for f in self.feature_order]
         x_np = np.array([row], dtype=np.float32)
         if pd is not None:
@@ -309,5 +348,11 @@ class PredictorService:
             "model_version": settings.model_version,
             "schema_version": settings.schema_version,
             "timing_ms": timing_ms,
+            "explain": _build_fallback_explain(
+                feature_order=self.feature_order,
+                numeric_feats=numeric_feats,
+                ranges=self.ranges,
+                top_k=5,
+            ),
         }
         return resp, timing_ms

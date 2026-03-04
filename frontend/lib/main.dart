@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'api/api_client.dart';
 import 'features/input/input_screen.dart';
 import 'features/predict/predict_screen.dart';
+import 'features/result/result_screen.dart';
 import 'models/predict_request.dart';
 
 void main() {
@@ -42,11 +44,13 @@ class _HomeScreenState extends State<_HomeScreen> {
       return;
     }
 
-    // ignore: avoid_print
-    print(result.features);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Получено ${result.features.length} полей')),
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ResultScreen(
+          request: result,
+          apiClient: ApiClient(),
+        ),
+      ),
     );
   }
 

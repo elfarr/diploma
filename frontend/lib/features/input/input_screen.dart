@@ -239,6 +239,10 @@ class _InputScreenState extends State<InputScreen> {
       final parsed = parseNumber(raw);
       if (parsed != null) {
         features[field.name] = parsed;
+      } else if (_categoricalFieldNames.contains(field.name)) {
+        // For one-hot categorical features, an empty value means "not selected".
+        // Backend still expects the feature key, so send explicit zero.
+        features[field.name] = 0.0;
       }
     }
 
@@ -350,12 +354,7 @@ class _InputScreenState extends State<InputScreen> {
           isDense: true,
         ),
         items: items,
-        validator: (value) {
-          if (value == null) {
-            return 'Выберите значение';
-          }
-          return null;
-        },
+        validator: (_) => null,
         onChanged: (value) {
           if (value != null) {
             _selectGroupOption(group, value);

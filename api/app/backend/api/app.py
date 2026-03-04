@@ -250,7 +250,7 @@ async def _parse_predict_payload(http_request: Request):
     try:
         return PredictRequest.model_validate(candidate)
     except Exception:
-        return JSONResponse(status_code=422, content={"error": "invalid_payload"})
+        return JSONResponse(status_code=422)
 
 
 @app.middleware("http")
@@ -372,10 +372,10 @@ def _safe_static_path(full_path: str) -> Path | None:
 @app.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
 async def spa_fallback(full_path: str):
     if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="Not Found")
+        raise HTTPException(status_code=404)
 
     if full_path in {"healthz", "metrics"}:
-        raise HTTPException(status_code=404, detail="Not Found")
+        raise HTTPException(status_code=404)
 
     static_path = _safe_static_path(full_path)
     if static_path and static_path.is_file():
