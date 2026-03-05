@@ -14,7 +14,7 @@ bool isUndetermined(double pCal, {double tLow = 0.35, double tHigh = 0.65}) {
 }
 
 String undeterminedText() {
-  return 'Модель не уверена — пересмотрите входные данные или перепроверь анализы.';
+  return 'Модель не уверена. Пересмотрите входные данные и перепроверьте анализы.';
 }
 
 String probText(double pCal) {

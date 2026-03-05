@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -7,6 +7,7 @@ import '../../models/explain_item.dart';
 import '../../models/predict_request.dart';
 import '../../models/predict_response.dart';
 import '../../shared/risk_ui.dart';
+import '../../shared/ui/app_layout.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({
@@ -48,17 +49,12 @@ class _ResultScreenState extends State<ResultScreen> {
 
           if (snapshot.hasError) {
             final message = _errorText(snapshot.error);
-            return Padding(
-              padding: const EdgeInsets.all(16),
+            return AppResponsiveContainer(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    message,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
+                  AppWarningCard(text: message),
+                  OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Назад к вводу'),
                   ),
@@ -80,70 +76,102 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildSuccess(BuildContext context, PredictResponse data) {
     final pCal = data.probCal;
     final top = _topFactors(data.explain);
-    final isUncertain = pCal != null && isUndetermined(pCal);
+    final isUncertain =
+        (data.undetermined ?? false) || (pCal != null && isUndetermined(pCal));
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            data.klass ?? '-',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            pCal != null ? probText(pCal) : 'Вероятность (калибр.): -',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            pCal != null ? confidenceBadge(pCal) : 'Уверенность: нет данных',
-          ),
-          if (isUncertain) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.orange),
-                borderRadius: BorderRadius.circular(8),
+    return ListView(
+      children: [
+        AppResponsiveContainer(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.klass ?? '-',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      pCal != null ? probText(pCal) : 'Вероятность (калибр.): -',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (pCal != null) ...[
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(99),
+                        child: LinearProgressIndicator(
+                          minHeight: 9,
+                          value: pCal.clamp(0, 1),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ConfidenceChip(
+                          text:
+                              pCal != null
+                                  ? confidenceBadge(pCal)
+                                  : 'Уверенность: нет данных',
+                        ),
+                        if (data.badge != null && data.badge!.trim().isNotEmpty)
+                          _ConfidenceChip(text: data.badge!),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              child: Text(undeterminedText()),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Text(
-            'Топ факторы',
-            style: Theme.of(context).textTheme.titleMedium,
+              if (isUncertain) AppWarningCard(text: undeterminedText()),
+              const AppSectionTitle('Топ факторы'),
+              if (top.isEmpty)
+                AppCard(
+                  child: Text(
+                    'Нет объяснений',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                )
+              else
+                ...top.map(_factorTile),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Назад к вводу'),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          if (top.isEmpty)
-            const Text('Нет объяснений')
-          else
-            ...top.map(_factorTile),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('\u041d\u0430\u0437\u0430\u0434 \u043a \u0432\u0432\u043e\u0434\u0443'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _factorTile(ExplainItem item) {
-    final arrow = item.contribution >= 0 ? '↑' : '↓';
-    final sign = item.contribution >= 0 ? '+' : '';
-    final contr = '$sign${item.contribution.toStringAsFixed(2)}';
-    final val = item.value.toStringAsFixed(2);
+    final positive = item.contribution >= 0;
+    final icon = positive ? Icons.north_east_rounded : Icons.south_east_rounded;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text('$arrow ${item.name} — вклад: $contr, значение: $val'),
+    return AppCard(
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: positive ? Colors.red.shade700 : Colors.green.shade700,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              item.name,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -171,5 +199,19 @@ class _ResultScreenState extends State<ResultScreen> {
       return 'Ошибка сервера: ${error.statusCode}';
     }
     return 'Ошибка сервера.';
+  }
+}
+
+class _ConfidenceChip extends StatelessWidget {
+  const _ConfidenceChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+      avatar: const Icon(Icons.verified_outlined, size: 18),
+    );
   }
 }

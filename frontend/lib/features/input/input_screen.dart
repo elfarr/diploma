@@ -15,7 +15,6 @@ class InputScreen extends StatefulWidget {
 }
 
 class _InputScreenState extends State<InputScreen> {
-
   final _formKey = GlobalKey<FormState>();
   final _storage = FormStorage();
 
@@ -209,11 +208,12 @@ class _InputScreenState extends State<InputScreen> {
       return reqErr;
     }
 
-    if (field.min != null && field.max != null) {
+    final range = _displayRange(field);
+    if (range != null) {
       return numberInRange(
         raw,
-        min: field.min!,
-        max: field.max!,
+        min: range.min,
+        max: range.max,
         required: true,
       );
     }
@@ -225,6 +225,29 @@ class _InputScreenState extends State<InputScreen> {
       return 'Введите число';
     }
     return null;
+  }
+
+  _FieldRange? _displayRange(SignatureField field) {
+    if (field.min == null || field.max == null) {
+      return null;
+    }
+
+    var min = field.min!;
+    var max = field.max!;
+    final converter = _converterFor(field.name);
+    final selectedUnit = _unitByField[field.name];
+    if (converter != null && selectedUnit != null) {
+      final baseUnit = converter.units.first;
+      min = converter.convert(min, baseUnit, selectedUnit);
+      max = converter.convert(max, baseUnit, selectedUnit);
+    }
+
+    if (min > max) {
+      final t = min;
+      min = max;
+      max = t;
+    }
+    return _FieldRange(min: min, max: max);
   }
 
   Future<void> _submit() async {
@@ -281,11 +304,6 @@ class _InputScreenState extends State<InputScreen> {
                           label: const Text('High'),
                           selected: _activePreset == 'high',
                           onSelected: (_) => _applyNamedPreset('high'),
-                        ),
-                        ChoiceChip(
-                          label: const Text('Undetermined'),
-                          selected: _activePreset == 'undetermined',
-                          onSelected: (_) => _applyNamedPreset('undetermined'),
                         ),
                       ],
                     ),
@@ -367,6 +385,10 @@ class _InputScreenState extends State<InputScreen> {
   Widget _buildNumericField(SignatureField field) {
     final converter = _converterFor(field.name);
     final selectedUnit = _unitByField[field.name];
+    final displayRange = _displayRange(field);
+    final helperText = displayRange == null
+        ? null
+        : 'Диапазон: ${formatNum(displayRange.min, digits: 3)}..${formatNum(displayRange.max, digits: 3)}';
 
     return _SectionCard(
       child: TextFormField(
@@ -376,9 +398,7 @@ class _InputScreenState extends State<InputScreen> {
           labelText: field.name,
           border: const OutlineInputBorder(),
           isDense: true,
-          helperText: (field.min != null && field.max != null)
-              ? 'Диапазон: ${field.min}..${field.max}'
-              : null,
+          helperText: helperText,
           suffixIcon: (converter != null && selectedUnit != null)
               ? Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -457,6 +477,16 @@ class _CategoricalGroup {
 
   final String key;
   final List<SignatureField> fields;
+}
+
+class _FieldRange {
+  const _FieldRange({
+    required this.min,
+    required this.max,
+  });
+
+  final double min;
+  final double max;
 }
 
 String _optionLabel(String groupKey, String fullFieldName) {

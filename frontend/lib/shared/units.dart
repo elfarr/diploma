@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 const double glucoseFactor = 18.0;
 const double cholesterolFactor = 38.67; 
 const double triglycerideFactor = 88.57; 
@@ -28,6 +30,8 @@ double mgDlToUmolL(double v, {required double factor}) {
 }
 
 String formatNum(double v, {int digits = 2}) {
-  final s = v.toStringAsFixed(digits);
+  final factor = math.pow(10, digits).toDouble();
+  final floored = (v * factor).floorToDouble() / factor;
+  final s = floored.toStringAsFixed(digits);
   return s.replaceFirst(RegExp(r'\.?0+$'), '');
 }
