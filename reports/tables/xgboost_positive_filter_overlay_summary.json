@@ -1,0 +1,41 @@
+{
+  "mode": "experimental_overlay_v1",
+  "rules": [
+    {
+      "if": "pred==1 and relative risk <= 63.0",
+      "then": "pred=0"
+    },
+    {
+      "if": "pred==1 and ЛПВП перед ТП >= 4.9",
+      "then": "pred=0"
+    },
+    {
+      "if": "pred==1 and Мочевая кислота перед ТП <= 28.0",
+      "then": "pred=0"
+    },
+    {
+      "if": "pred==0 and Диагноз == 'МКБ'",
+      "then": "pred=1"
+    }
+  ],
+  "before": {
+    "tp": 29,
+    "fp": 18,
+    "fn": 5,
+    "tn": 139
+  },
+  "after": {
+    "tp": 30,
+    "fp": 11,
+    "fn": 4,
+    "tn": 146
+  },
+  "applied_counts": {
+    "suppress_relative_risk": 5,
+    "suppress_hdl": 2,
+    "suppress_uric_acid": 1,
+    "rescue_mkb": 2
+  },
+  "sens_after": 0.8823529411764706,
+  "spec_after": 0.9299363057324841
+}

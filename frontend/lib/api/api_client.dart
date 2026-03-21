@@ -28,7 +28,7 @@ class ApiClient {
       'Accept': 'application/json',
     };
 
-    if (!AppEnv.useProxy) {
+    if (!AppEnv.useProxy && AppEnv.apiToken.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${AppEnv.apiToken}';
     }
 

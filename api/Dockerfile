@@ -21,7 +21,8 @@ RUN pip install --no-cache-dir --upgrade pip \
         python-dotenv \
         joblib \
         numpy \
-        onnxruntime
+        onnxruntime \
+        catboost
 
 COPY app/backend/__init__.py /app/backend/__init__.py
 COPY app/backend/api /app/backend/api

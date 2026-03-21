@@ -1,0 +1,10 @@
+{
+  "model": "catboost",
+  "target_max_fn": 1,
+  "target_max_fp": 7,
+  "tp_total": 21,
+  "fp_total": 17,
+  "tn_total": 140,
+  "fn_total": 13,
+  "meets_target": false
+}

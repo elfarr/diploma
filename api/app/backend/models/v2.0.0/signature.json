@@ -135,33 +135,9 @@
         "max": null
       },
       {
-        "name": "QRISK3",
-        "type": "float",
-        "label": "QRISK3",
-        "unit": "",
-        "min": null,
-        "max": null
-      },
-      {
-        "name": "healthy person risk",
-        "type": "float",
-        "label": "healthy person risk",
-        "unit": "",
-        "min": null,
-        "max": null
-      },
-      {
         "name": "relative risk",
         "type": "float",
         "label": "relative risk",
-        "unit": "",
-        "min": null,
-        "max": null
-      },
-      {
-        "name": "qrisk age",
-        "type": "float",
-        "label": "qrisk age",
         "unit": "",
         "min": null,
         "max": null

@@ -1,5 +1,5 @@
 {
-  "t_low": 0.4,
-  "t_high": 0.5,
-  "source_model": "catboost"
+  "t_low": 0.55,
+  "t_high": 0.85,
+  "source_model": "relative_only_production_pack"
 }

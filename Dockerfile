@@ -25,7 +25,7 @@ WORKDIR /build/frontend
 COPY --chown=flutter:flutter frontend/pubspec.yaml frontend/pubspec.lock* ./
 RUN flutter pub get
 COPY --chown=flutter:flutter frontend/ ./
-RUN flutter build web --release
+RUN flutter build web --release --pwa-strategy=none
 
 
 FROM python:3.11-slim AS runtime

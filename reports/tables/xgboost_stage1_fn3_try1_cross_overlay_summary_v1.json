@@ -1,0 +1,36 @@
+{
+  "mode": "cross_model_overlay_v1",
+  "before": {
+    "tp": 31,
+    "fp": 9,
+    "fn": 3,
+    "tn": 148
+  },
+  "after": {
+    "tp": 32,
+    "fp": 7,
+    "fn": 2,
+    "tn": 150
+  },
+  "sens_after": 0.9411764705882353,
+  "spec_after": 0.9554140127388535,
+  "rules": [
+    {
+      "if": "pred==1 and p_ens <= 0.0",
+      "then": "pred=0"
+    },
+    {
+      "if": "pred==1 and p_catbase <= 0.0766318615023284",
+      "then": "pred=0"
+    },
+    {
+      "if": "pred==0 and Диагноз == МКБ",
+      "then": "pred=1"
+    }
+  ],
+  "applied_counts": {
+    "suppress_ens": 2,
+    "suppress_catbase": 1,
+    "rescue_diag": 2
+  }
+}

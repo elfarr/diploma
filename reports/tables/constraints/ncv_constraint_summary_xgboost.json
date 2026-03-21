@@ -1,0 +1,10 @@
+{
+  "model": "xgboost",
+  "target_max_fn": 1,
+  "target_max_fp": 7,
+  "tp_total": 27,
+  "fp_total": 24,
+  "tn_total": 133,
+  "fn_total": 7,
+  "meets_target": false
+}

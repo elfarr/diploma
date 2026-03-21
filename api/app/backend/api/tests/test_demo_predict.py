@@ -123,3 +123,25 @@ def test_predict_requires_auth_when_demo_enabled_false():
     finally:
         appmod.settings.DEMO_ENABLED = old_demo_enabled
         appmod.PRED = old_pred
+
+
+def test_api_meta_no_auth_when_demo_enabled_true():
+    old_demo_enabled = appmod.settings.DEMO_ENABLED
+    appmod.settings.DEMO_ENABLED = True
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/api/meta")
+            assert resp.status_code == 200
+    finally:
+        appmod.settings.DEMO_ENABLED = old_demo_enabled
+
+
+def test_api_meta_requires_auth_when_demo_enabled_false():
+    old_demo_enabled = appmod.settings.DEMO_ENABLED
+    appmod.settings.DEMO_ENABLED = False
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/api/meta")
+            assert resp.status_code == 401
+    finally:
+        appmod.settings.DEMO_ENABLED = old_demo_enabled

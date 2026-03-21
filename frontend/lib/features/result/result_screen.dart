@@ -6,6 +6,7 @@ import '../../api/api_client.dart';
 import '../../models/explain_item.dart';
 import '../../models/predict_request.dart';
 import '../../models/predict_response.dart';
+import '../../shared/report_download.dart';
 import '../../shared/risk_ui.dart';
 import '../../shared/ui/app_layout.dart';
 
@@ -56,7 +57,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   AppWarningCard(text: message),
                   OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Назад к вводу'),
+                    child: const Text('На главную'),
                   ),
                 ],
               ),
@@ -76,8 +77,7 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildSuccess(BuildContext context, PredictResponse data) {
     final pCal = data.probCal;
     final top = _topFactors(data.explain);
-    final isUncertain =
-        (data.undetermined ?? false) || (pCal != null && isUndetermined(pCal));
+    final isUncertain = (data.undetermined ?? false) || data.klass == 'undetermined';
 
     return ListView(
       children: [
@@ -91,13 +91,13 @@ class _ResultScreenState extends State<ResultScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      data.klass ?? '-',
+                      _klassRu(data.klass) ?? '-',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      pCal != null ? probText(pCal) : 'Вероятность (калибр.): -',
+                      pCal != null ? probText(pCal) : 'Вероятность: -',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     if (pCal != null) ...[
@@ -140,9 +140,15 @@ class _ResultScreenState extends State<ResultScreen> {
               else
                 ...top.map(_factorTile),
               const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: () => _downloadReport(context, data, top),
+                icon: const Icon(Icons.download_rounded),
+                label: const Text('Скачать отчет'),
+              ),
+              const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Назад к вводу'),
+                child: const Text('На главную'),
               ),
             ],
           ),
@@ -181,6 +187,175 @@ class _ResultScreenState extends State<ResultScreen> {
     return list.length > 5 ? list.sublist(0, 5) : list;
   }
 
+  Future<void> _downloadReport(
+    BuildContext context,
+    PredictResponse data,
+    List<ExplainItem> top,
+  ) async {
+    final report = _buildReport(data, top);
+    final timestamp = _fileTimestamp(DateTime.now());
+    final filename = 'kidney-risk-report-$timestamp.txt';
+
+    try {
+      await downloadTextReport(filename: filename, content: report);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Файл \"$filename\" подготовлен к скачиванию')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось скачать файл: $error')),
+      );
+    }
+  }
+
+  String _buildReport(PredictResponse data, List<ExplainItem> top) {
+    final buffer = StringBuffer();
+    final now = DateTime.now();
+
+    buffer.writeln('Отчет по оценке риска осложнений после трансплантации почки');
+    buffer.writeln('Дата: ${_humanTimestamp(now)}');
+    buffer.writeln();
+    buffer.writeln('Результат');
+    buffer.writeln('Класс риска: ${_klassRu(data.klass) ?? '-'}');
+    buffer.writeln(
+      'Вероятность: ${data.probCal != null ? '${(data.probCal! * 100).toStringAsFixed(0)}%' : '-'}',
+    );
+    if (data.badge != null && data.badge!.trim().isNotEmpty) {
+      buffer.writeln('Статус: ${data.badge}');
+    }
+    if ((data.undetermined ?? false) || data.klass == 'undetermined') {
+      buffer.writeln('Примечание: ${undeterminedText()}');
+    }
+
+    buffer.writeln();
+    buffer.writeln('Наиболее значимые факторы');
+    if (top.isEmpty) {
+      buffer.writeln('Нет данных');
+    } else {
+      for (final item in top) {
+        final direction = item.contribution >= 0 ? 'повышает риск' : 'снижает риск';
+        buffer.writeln(
+          '- ${item.name}: ${_formatNumber(item.value)} ($direction)',
+        );
+      }
+    }
+
+    buffer.writeln();
+    buffer.writeln('Введенные данные');
+    for (final line in _reportInputLines()) {
+      buffer.writeln('- $line');
+    }
+
+    return buffer.toString();
+  }
+
+  List<String> _reportInputLines() {
+    final entries = widget.request.features.entries.toList();
+    final groupCounts = <String, int>{};
+
+    for (final entry in entries) {
+      final prefix = _categoricalPrefix(entry.key);
+      if (prefix == null) {
+        continue;
+      }
+      if (!_isBinaryLike(entry.value)) {
+        continue;
+      }
+      groupCounts[prefix] = (groupCounts[prefix] ?? 0) + 1;
+    }
+
+    final lines = <String>[];
+    final seenGroups = <String>{};
+    for (final entry in entries) {
+      final prefix = _categoricalPrefix(entry.key);
+      final isGroupedCategory = prefix != null &&
+          (groupCounts[prefix] ?? 0) >= 2 &&
+          _isBinaryLike(entry.value);
+
+      if (isGroupedCategory) {
+        if (seenGroups.contains(prefix)) {
+          continue;
+        }
+        seenGroups.add(prefix);
+        final selected = entries.firstWhere(
+          (candidate) =>
+              candidate.key.startsWith('${prefix}_') &&
+              (_asDouble(candidate.value) ?? 0) >= 0.5,
+          orElse: () => MapEntry<String, dynamic>('', null),
+        );
+        final selectedLabel = selected.key.isEmpty
+            ? 'не указано'
+            : selected.key.substring(prefix.length + 1);
+        lines.add('$prefix: $selectedLabel');
+        continue;
+      }
+
+      lines.add('${entry.key}: ${_formatValue(entry.value)}');
+    }
+
+    return lines;
+  }
+
+  String? _categoricalPrefix(String key) {
+    final index = key.indexOf('_');
+    if (index <= 0) {
+      return null;
+    }
+    return key.substring(0, index);
+  }
+
+  bool _isBinaryLike(dynamic value) {
+    final numeric = _asDouble(value);
+    return numeric == 0.0 || numeric == 1.0;
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return null;
+  }
+
+  String _formatValue(dynamic value) {
+    if (value is num) {
+      return _formatNumber(value.toDouble());
+    }
+    return value?.toString() ?? '-';
+  }
+
+  String _formatNumber(double value) {
+    final rounded = value.toStringAsFixed(3);
+    return rounded
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  String _fileTimestamp(DateTime value) {
+    final y = value.year.toString().padLeft(4, '0');
+    final m = value.month.toString().padLeft(2, '0');
+    final d = value.day.toString().padLeft(2, '0');
+    final hh = value.hour.toString().padLeft(2, '0');
+    final mm = value.minute.toString().padLeft(2, '0');
+    final ss = value.second.toString().padLeft(2, '0');
+    return '$y$m$d-$hh$mm$ss';
+  }
+
+  String _humanTimestamp(DateTime value) {
+    final y = value.year.toString().padLeft(4, '0');
+    final m = value.month.toString().padLeft(2, '0');
+    final d = value.day.toString().padLeft(2, '0');
+    final hh = value.hour.toString().padLeft(2, '0');
+    final mm = value.minute.toString().padLeft(2, '0');
+    final ss = value.second.toString().padLeft(2, '0');
+    return '$d.$m.$y $hh:$mm:$ss';
+  }
+
   String _errorText(Object? error) {
     if (error is TimeoutException) {
       return 'Превышено время ожидания. Проверь интернет.';
@@ -199,6 +374,19 @@ class _ResultScreenState extends State<ResultScreen> {
       return 'Ошибка сервера: ${error.statusCode}';
     }
     return 'Ошибка сервера.';
+  }
+
+  String? _klassRu(String? klass) {
+    switch (klass) {
+      case 'low':
+        return 'Низкий риск';
+      case 'high':
+        return 'Высокий риск';
+      case 'undetermined':
+        return 'Неопределённо';
+      default:
+        return klass;
+    }
   }
 }
 

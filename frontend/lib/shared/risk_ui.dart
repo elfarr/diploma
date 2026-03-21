@@ -1,4 +1,4 @@
-String confidenceBadge(double pCal) {
+﻿String confidenceBadge(double pCal) {
   final d = (pCal - 0.5).abs();
   if (d >= 0.30) {
     return 'Высокая уверенность';
@@ -9,15 +9,15 @@ String confidenceBadge(double pCal) {
   return 'Низкая уверенность';
 }
 
-bool isUndetermined(double pCal, {double tLow = 0.35, double tHigh = 0.65}) {
+bool isUndetermined(double pCal, {double tLow = 0.55, double tHigh = 0.85}) {
   return pCal >= tLow && pCal <= tHigh;
 }
 
 String undeterminedText() {
-  return 'Модель не уверена. Пересмотрите входные данные и перепроверьте анализы.';
+  return 'Результат находится в промежуточной зоне. Нужна дополнительная оценка.';
 }
 
 String probText(double pCal) {
   final percent = (pCal * 100).toStringAsFixed(0);
-  return 'Вероятность (калибр.): $percent%';
+  return 'Вероятность: $percent%';
 }

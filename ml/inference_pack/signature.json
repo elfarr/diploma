@@ -209,31 +209,7 @@
       "impute": "median"
     },
     {
-      "name": "QRISK3",
-      "type": "numeric",
-      "units": "",
-      "valid_range": "",
-      "missing": "allowed",
-      "impute": "median"
-    },
-    {
-      "name": "healthy person risk",
-      "type": "numeric",
-      "units": "",
-      "valid_range": "",
-      "missing": "allowed",
-      "impute": "median"
-    },
-    {
       "name": "relative risk",
-      "type": "numeric",
-      "units": "",
-      "valid_range": "",
-      "missing": "allowed",
-      "impute": "median"
-    },
-    {
-      "name": "qrisk age",
       "type": "numeric",
       "units": "",
       "valid_range": "",

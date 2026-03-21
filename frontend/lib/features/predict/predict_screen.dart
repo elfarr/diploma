@@ -24,10 +24,7 @@ const _lowVector = <String, double>{
   'ОТТ перед ТП': 0,
   'САД перед ТП': 117.82160281805571,
   'ДАД перед ТП': 55.60091162264049,
-  'QRISK3': 2.0361785265663026,
-  'healthy person risk': 0.7111382475963006,
   'relative risk': 0.13025527701626988,
-  'qrisk age': 24.143157619045063,
   'Пол_жен': 1,
   'Пол_муж': 0,
   'Диагноз_АРМС': 0,
@@ -80,10 +77,7 @@ const _highVector = <String, double>{
   'ОТТ перед ТП': 1,
   'САД перед ТП': 150,
   'ДАД перед ТП': 95,
-  'QRISK3': 15,
-  'healthy person risk': 5,
   'relative risk': 2,
-  'qrisk age': 70,
   'Пол_жен': 0,
   'Пол_муж': 1,
   'Диагноз_АРМС': 0,
@@ -125,8 +119,7 @@ const _demoFields = [
   _Field('ТГ перед ТП', 'Триглицериды', 0.2, 5, 'ммоль/л', 2),
   _Field('САД перед ТП', 'Сист. АД', 80, 200, 'мм рт.ст.', 0),
   _Field('ДАД перед ТП', 'Диаст. АД', 40, 120, 'мм рт.ст.', 0),
-  _Field('qrisk age', 'qrisk age', 18, 100, 'лет', 0),
-  _Field('QRISK3', 'QRISK3', 0, 30, '%', 2),
+  _Field('relative risk', 'relative risk', 0, 20, '', 2),
 ];
 
 class PredictScreen extends StatefulWidget {

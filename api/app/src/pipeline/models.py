@@ -9,10 +9,27 @@ RANDOM_SEED = 42
 
 
 def build_svm(params: Dict[str, Any]) -> SVC:
+    class_weight = params.get("class_weight", "balanced")
+    probability = bool(params.get("probability", True))
+    if isinstance(class_weight, dict):
+        normalized: Dict[Any, float] = {}
+        for k, v in class_weight.items():
+            key = k
+            if isinstance(k, str):
+                try:
+                    key = int(k)
+                except ValueError:
+                    try:
+                        key = float(k)
+                    except ValueError:
+                        key = k
+            normalized[key] = float(v)
+        class_weight = normalized
+
     return SVC(
-        probability=True,
+        probability=probability,
         kernel="rbf",
-        class_weight="balanced",
+        class_weight=class_weight,
         C=float(params.get("C", 1.0)),
         gamma=params.get("gamma", "scale"),
         random_state=RANDOM_SEED,
@@ -41,6 +58,31 @@ def build_catboost(params: Dict[str, Any]) -> Optional[Any]:
         cat_params["class_weights"] = class_weights
 
     return CatBoostClassifier(**cat_params)
+
+
+def build_xgboost(params: Dict[str, Any]) -> Optional[Any]:
+    try:
+        from xgboost import XGBClassifier
+    except ImportError:
+        return None
+
+    xgb_params: Dict[str, Any] = {
+        "objective": "binary:logistic",
+        "eval_metric": "logloss",
+        "tree_method": "hist",
+        "random_state": RANDOM_SEED,
+        "n_jobs": -1,
+        "n_estimators": int(params.get("n_estimators", 250)),
+        "max_depth": int(params.get("max_depth", 2)),
+        "learning_rate": float(params.get("learning_rate", 0.05)),
+        "min_child_weight": float(params.get("min_child_weight", 4.0)),
+        "subsample": float(params.get("subsample", 0.8)),
+        "colsample_bytree": float(params.get("colsample_bytree", 0.7)),
+        "reg_lambda": float(params.get("reg_lambda", 6.0)),
+        "gamma": float(params.get("gamma", 1.0)),
+        "scale_pos_weight": float(params.get("scale_pos_weight", 4.0)),
+    }
+    return XGBClassifier(**xgb_params)
 
 
 def build_mlp(params: Dict[str, Any]) -> MLPClassifier:

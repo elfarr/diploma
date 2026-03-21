@@ -152,37 +152,17 @@ def confidence(p_cal: float) -> float:
     return abs(p_cal - 0.5)
 
 
-def _build_fallback_explain(
-    feature_order: List[str],
-    numeric_feats: Dict[str, float],
-    ranges: Dict[str, RangeSpec],
-    top_k: int = 5,
-) -> List[Dict[str, float | str]]:
-    scored: List[Tuple[str, float, float]] = []
-    for name in feature_order:
-        if name not in numeric_feats:
-            continue
-        value = float(numeric_feats[name])
-        spec = ranges.get(name)
-        if spec is None:
-            continue
-        width = float(spec.high - spec.low)
-        if width <= 0:
-            continue
-        mid = float((spec.low + spec.high) / 2.0)
-        contribution = (value - mid) / width
-        scored.append((name, value, contribution))
+def _is_binary_spec(spec: Optional[RangeSpec]) -> bool:
+    if spec is None:
+        return False
+    return float(spec.low) == 0.0 and float(spec.high) == 1.0
 
-    if not scored:
-        for name in feature_order:
-            if name not in numeric_feats:
-                continue
-            value = float(numeric_feats[name])
-            scored.append((name, value, value))
 
-    scored.sort(key=lambda x: abs(x[2]), reverse=True)
-    top = scored[:top_k]
-    return [{"name": n, "value": v, "contribution": c} for n, v, c in top]
+def _group_prefix(name: str) -> Optional[str]:
+    if "_" not in name:
+        return None
+    prefix = name.split("_", 1)[0].strip()
+    return prefix or None
 
 
 class PredictorService:
@@ -222,6 +202,7 @@ class PredictorService:
         self.t_high = float(self.artifacts["thresholds"]["t_high"])
         self.competence = self.artifacts["competence"]
         self.calib_by_model = self.artifacts.get("calibrations", {})
+        self.categorical_group_prefixes = self._build_categorical_group_prefixes()
         self.calibration_method_by_model = {
             model_name: (
                 self.calib_by_model.get(model_name, {}).get("type")
@@ -230,6 +211,85 @@ class PredictorService:
             )
             for model_name in ("svm_rbf", "catboost", "mlp")
         }
+
+    def _build_categorical_group_prefixes(self) -> set[str]:
+        by_prefix: Dict[str, List[str]] = {}
+        for feature_name in self.feature_order:
+            prefix = _group_prefix(feature_name)
+            if prefix is None:
+                continue
+            if not _is_binary_spec(self.ranges.get(feature_name)):
+                continue
+            by_prefix.setdefault(prefix, []).append(feature_name)
+        return {prefix for prefix, fields in by_prefix.items() if len(fields) >= 2}
+
+    def _build_inputs(self, numeric_feats: Dict[str, float]) -> Tuple[Any, np.ndarray]:
+        row = [float(numeric_feats[f]) for f in self.feature_order]
+        x_np = np.array([row], dtype=np.float32)
+        if pd is not None:
+            x_sklearn: Any = pd.DataFrame([dict(zip(self.feature_order, row))], columns=self.feature_order)
+        else:
+            x_sklearn = x_np
+        return x_sklearn, x_np
+
+    def _neutral_value(self, feature_name: str, current_value: float) -> float:
+        spec = self.ranges.get(feature_name)
+        if _is_binary_spec(spec):
+            return 0.0
+        if spec is not None:
+            return float((spec.low + spec.high) / 2.0)
+        return 0.0
+
+    def _explain_feature_candidates(self, numeric_feats: Dict[str, float]) -> List[str]:
+        candidates: List[str] = []
+        for feature_name in self.feature_order:
+            if feature_name not in numeric_feats:
+                continue
+            prefix = _group_prefix(feature_name)
+            current_value = float(numeric_feats[feature_name])
+            if prefix is not None and prefix in self.categorical_group_prefixes:
+                if current_value >= 0.5:
+                    candidates.append(feature_name)
+                continue
+            candidates.append(feature_name)
+        return candidates
+
+    def _build_local_explain(
+        self,
+        numeric_feats: Dict[str, float],
+        base_p_final: float,
+        top_k: int = 5,
+    ) -> List[Dict[str, float | str]]:
+        scored: List[Tuple[str, float, float]] = []
+        for feature_name in self._explain_feature_candidates(numeric_feats):
+            current_value = float(numeric_feats[feature_name])
+            neutral_value = self._neutral_value(feature_name, current_value)
+            if math.isclose(current_value, neutral_value, rel_tol=0.0, abs_tol=1e-12):
+                continue
+
+            perturbed = dict(numeric_feats)
+            perturbed[feature_name] = neutral_value
+            try:
+                x_sklearn_mut, x_np_mut = self._build_inputs(perturbed)
+                p_mut = float(self.predict_one(x_sklearn=x_sklearn_mut, x_np=x_np_mut)["p_final"])
+            except Exception:
+                continue
+
+            contribution = float(base_p_final - p_mut)
+            if math.isclose(contribution, 0.0, rel_tol=0.0, abs_tol=1e-12):
+                continue
+            scored.append((feature_name, current_value, contribution))
+
+        scored.sort(key=lambda item: abs(item[2]), reverse=True)
+        top = scored[:top_k]
+        return [
+            {
+                "name": feature_name,
+                "value": value,
+                "contribution": contribution,
+            }
+            for feature_name, value, contribution in top
+        ]
 
     @staticmethod
     def _predict_positive_proba(model: Any, x: np.ndarray) -> float:
@@ -290,7 +350,7 @@ class PredictorService:
     def predict(self, features: Dict[str, float], unit_convert: bool) -> Tuple[Dict[str, Any], int]:
         t0 = time.perf_counter()
 
-        feats = convert_units_if_needed(features, unit_convert)
+        feats = dict(convert_units_if_needed(features, unit_convert))
 
         numeric_feats: Dict[str, float] = {}
         for f in self.feature_order:
@@ -312,12 +372,7 @@ class PredictorService:
             suffix = "..." if len(missing) > 5 else ""
             raise MissingFeatureError(f"missing_features: {sample}{suffix}")
 
-        row = [numeric_feats[f] for f in self.feature_order]
-        x_np = np.array([row], dtype=np.float32)
-        if pd is not None:
-            x_sklearn: Any = pd.DataFrame([dict(zip(self.feature_order, row))], columns=self.feature_order)
-        else:
-            x_sklearn = x_np
+        x_sklearn, x_np = self._build_inputs(numeric_feats)
         pred = self.predict_one(x_sklearn=x_sklearn, x_np=x_np)
 
         ood = False
@@ -348,10 +403,9 @@ class PredictorService:
             "model_version": settings.model_version,
             "schema_version": settings.schema_version,
             "timing_ms": timing_ms,
-            "explain": _build_fallback_explain(
-                feature_order=self.feature_order,
+            "explain": self._build_local_explain(
                 numeric_feats=numeric_feats,
-                ranges=self.ranges,
+                base_p_final=float(pred["p_final"]),
                 top_k=5,
             ),
         }

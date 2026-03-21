@@ -225,7 +225,7 @@ def _run_prediction(payload: PredictRequest, include_technical_fields: bool):
     except BadInputError as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
     except Exception:
-        return JSONResponse(status_code=500)
+        return JSONResponse(status_code=500, content={"error": "internal_error"})
 
     PRED_COUNT.labels(out.get("class", "unknown")).inc()
     return _build_predict_response(out, include_technical_fields=include_technical_fields)
@@ -235,10 +235,10 @@ async def _parse_predict_payload(http_request: Request):
     try:
         raw = await http_request.json()
     except Exception:
-        return JSONResponse(status_code=400)
+        return JSONResponse(status_code=400, content={"error": "invalid_json"})
 
     if not isinstance(raw, dict):
-        return JSONResponse(status_code=422)
+        return JSONResponse(status_code=422, content={"error": "invalid_payload"})
 
     if "features" in raw:
         candidate = raw
@@ -250,7 +250,7 @@ async def _parse_predict_payload(http_request: Request):
     try:
         return PredictRequest.model_validate(candidate)
     except Exception:
-        return JSONResponse(status_code=422)
+        return JSONResponse(status_code=422, content={"error": "validation_error"})
 
 
 @app.middleware("http")
@@ -284,17 +284,16 @@ async def healthz():
     return {"status": "ok"}
 
 
-@app.get("/api/meta", dependencies=[Depends(auth_bearer), Depends(enforce_model_version)])
+@app.get("/api/meta", dependencies=[Depends(auth_bearer_unless_demo_enabled), Depends(enforce_model_version)])
 @instrument("/api/meta", "GET")
 async def meta():
-    ranges = {name: {"low": spec.low, "high": spec.high} for name, spec in RANGES.items()}
     return build_meta_payload(
         model_version=settings.MODEL_VERSION,
         schema_version=settings.SCHEMA_VERSION,
         thresholds=THRESHOLDS,
         models=MODEL_CATALOG,
         features=FEATURE_ORDER,
-        ranges=ranges,
+        ranges={name: {"low": spec.low, "high": spec.high} for name, spec in RANGES.items()},
     )
 
 

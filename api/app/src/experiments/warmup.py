@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
+import numpy as np
 import pandas as pd
 import yaml
 from sklearn.base import clone
@@ -23,6 +24,34 @@ from src.pipeline.models import build_catboost, build_mlp, build_svm
 from src.pipeline.preprocess import build_preprocess
 
 LOGGER = logging.getLogger("warmup")
+
+
+def oversample_to_ratio(
+    X: pd.DataFrame,
+    y: pd.Series,
+    target_pos_ratio: float,
+    random_state: int,
+) -> tuple[pd.DataFrame, pd.Series]:
+    if not (0.0 < target_pos_ratio < 1.0):
+        return X, y
+    y_arr = y.to_numpy(dtype=int)
+    pos_idx = np.where(y_arr == 1)[0]
+    neg_idx = np.where(y_arr == 0)[0]
+    n_pos = len(pos_idx)
+    n_neg = len(neg_idx)
+    if n_pos == 0 or n_neg == 0:
+        return X, y
+
+    desired_pos = int(np.ceil((target_pos_ratio / (1.0 - target_pos_ratio)) * n_neg))
+    if desired_pos <= n_pos:
+        return X, y
+
+    add_n = desired_pos - n_pos
+    rng = np.random.default_rng(random_state)
+    sampled = rng.choice(pos_idx, size=add_n, replace=True)
+    all_idx = np.concatenate([np.arange(len(y_arr)), sampled])
+    rng.shuffle(all_idx)
+    return X.iloc[all_idx].reset_index(drop=True), y.iloc[all_idx].reset_index(drop=True)
 
 
 def setup_logging() -> None:
@@ -58,12 +87,23 @@ def infer_categorical_features(df: pd.DataFrame, features: List[str]) -> List[st
     return categorical
 
 
-def metric_dict(y_true: pd.Series, proba: Iterable[float]) -> Dict[str, float]:
-    proba_arr = pd.Series(proba)
+def metric_dict(y_true: pd.Series, proba: Iterable[float], threshold: float = 0.5) -> Dict[str, float]:
+    proba_arr = pd.Series(proba).astype(float)
+    pred = (proba_arr >= threshold).astype(int)
+    y_bin = y_true.astype(int)
+    tp = int(((pred == 1) & (y_bin == 1)).sum())
+    fp = int(((pred == 1) & (y_bin == 0)).sum())
+    tn = int(((pred == 0) & (y_bin == 0)).sum())
+    fn = int(((pred == 0) & (y_bin == 1)).sum())
+    sens = float(tp / (tp + fn)) if (tp + fn) > 0 else float("nan")
+    spec = float(tn / (tn + fp)) if (tn + fp) > 0 else float("nan")
+
     return {
         "roc_auc": float(roc_auc_score(y_true, proba_arr)),
         "pr_auc": float(average_precision_score(y_true, proba_arr)),
         "brier": float(brier_score_loss(y_true, proba_arr)),
+        "sens": sens,
+        "spec": spec,
     }
 
 
@@ -73,9 +113,13 @@ def aggregate_metrics(items: List[Dict[str, float]]) -> Dict[str, float]:
         "roc_auc_mean": float(df["roc_auc"].mean()),
         "pr_auc_mean": float(df["pr_auc"].mean()),
         "brier_mean": float(df["brier"].mean()),
+        "sens_mean": float(df["sens"].mean()),
+        "spec_mean": float(df["spec"].mean()),
         "roc_auc_std": float(df["roc_auc"].std(ddof=0)),
         "pr_auc_std": float(df["pr_auc"].std(ddof=0)),
         "brier_std": float(df["brier"].std(ddof=0)),
+        "sens_std": float(df["sens"].std(ddof=0)),
+        "spec_std": float(df["spec"].std(ddof=0)),
     }
 
 
@@ -87,10 +131,11 @@ def build_param_grid(model_name: str, raw_grid: Dict[str, Any]) -> List[Dict[str
         return [int(v) for v in values]
 
     if model_name == "svm_rbf":
-        keys = ["C", "gamma"]
+        keys = ["C", "gamma", "class_weight"]
         values = [
             _as_float_list(raw_grid.get("C", [1.0])),
             raw_grid.get("gamma", ["scale"]),
+            raw_grid.get("class_weight", ["balanced"]),
         ]
     elif model_name == "catboost":
         keys = ["depth", "n_estimators", "learning_rate", "class_weights"]
@@ -98,7 +143,7 @@ def build_param_grid(model_name: str, raw_grid: Dict[str, Any]) -> List[Dict[str
             _as_int_list(raw_grid.get("depth", [6])),
             _as_int_list(raw_grid.get("n_estimators", [500])),
             _as_float_list(raw_grid.get("learning_rate", [0.03])),
-            [raw_grid.get("class_weights", "balanced")],
+            raw_grid.get("class_weights", ["balanced"]),
         ]
     elif model_name == "mlp":
         keys = ["layers", "dropout", "weight_decay", "early_stopping"]
@@ -153,13 +198,20 @@ def evaluate_inner_cv(
     builder: Callable[[Dict[str, Any]], Any],
     params: Dict[str, Any],
     seed: int,
+    oversample_pos_ratio: float,
 ) -> Dict[str, float]:
     skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=seed)
     fold_metrics: List[Dict[str, float]] = []
 
-    for tr_idx, va_idx in skf.split(X, y):
+    for fold_i, (tr_idx, va_idx) in enumerate(skf.split(X, y), start=1):
         X_tr, X_va = X.iloc[tr_idx], X.iloc[va_idx]
         y_tr, y_va = y.iloc[tr_idx], y.iloc[va_idx]
+        X_tr_fit, y_tr_fit = oversample_to_ratio(
+            X_tr.reset_index(drop=True),
+            y_tr.reset_index(drop=True),
+            target_pos_ratio=oversample_pos_ratio,
+            random_state=seed + fold_i,
+        )
 
         estimator = builder(params)
         if estimator is None:
@@ -171,7 +223,7 @@ def evaluate_inner_cv(
                 ("model", estimator),
             ]
         )
-        pipe.fit(X_tr, y_tr)
+        pipe.fit(X_tr_fit, y_tr_fit)
         proba = pipe.predict_proba(X_va)[:, 1]
         fold_metrics.append(metric_dict(y_va, proba))
 
@@ -187,13 +239,20 @@ def evaluate_calibration_inner_cv(
     best_params: Dict[str, Any],
     method: str,
     seed: int,
+    oversample_pos_ratio: float,
 ) -> Dict[str, float]:
     skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=seed)
     fold_metrics: List[Dict[str, float]] = []
 
-    for tr_idx, va_idx in skf.split(X, y):
+    for fold_i, (tr_idx, va_idx) in enumerate(skf.split(X, y), start=1):
         X_tr, X_va = X.iloc[tr_idx], X.iloc[va_idx]
         y_tr, y_va = y.iloc[tr_idx], y.iloc[va_idx]
+        X_tr_fit, y_tr_fit = oversample_to_ratio(
+            X_tr.reset_index(drop=True),
+            y_tr.reset_index(drop=True),
+            target_pos_ratio=oversample_pos_ratio,
+            random_state=seed + 100 + fold_i,
+        )
 
         base_estimator = Pipeline(
             steps=[
@@ -202,7 +261,7 @@ def evaluate_calibration_inner_cv(
             ]
         )
         calibrator = build_calibrator(base_estimator=base_estimator, method=method)
-        calibrator.fit(X_tr, y_tr)
+        calibrator.fit(X_tr_fit, y_tr_fit)
         proba = calibrator.predict_proba(X_va)[:, 1]
         fold_metrics.append(metric_dict(y_va, proba))
 
@@ -219,6 +278,8 @@ def fit_and_eval_on_test(
     builder: Callable[[Dict[str, Any]], Any],
     best_params: Dict[str, Any],
     best_calibrator: str | None,
+    oversample_pos_ratio: float,
+    seed: int,
 ) -> Dict[str, float]:
     base_estimator = Pipeline(
         steps=[
@@ -231,7 +292,13 @@ def fit_and_eval_on_test(
     else:
         final_model = clone(base_estimator)
 
-    final_model.fit(X_train, y_train)
+    X_train_fit, y_train_fit = oversample_to_ratio(
+        X_train.reset_index(drop=True),
+        y_train.reset_index(drop=True),
+        target_pos_ratio=oversample_pos_ratio,
+        random_state=seed + 999,
+    )
+    final_model.fit(X_train_fit, y_train_fit)
     proba = final_model.predict_proba(X_test)[:, 1]
     return metric_dict(y_test, proba)
 
@@ -252,6 +319,11 @@ def main() -> None:
         help="Путь к конфигу сеток моделей",
     )
     parser.add_argument("--seed", default=42, type=int)
+    parser.add_argument(
+        "--oversample-pos-ratio",
+        default=0.45,
+        type=float,
+    )
     args = parser.parse_args()
 
     setup_logging()
@@ -373,7 +445,7 @@ def main() -> None:
         )
 
         per_k_models: Dict[str, Any] = {}
-        best_test_roc_auc_for_k = float("-inf")
+        best_test_sens_for_k = float("-inf")
 
         for model_name in model_order:
             model_grid = grids_cfg.get(model_name, {})
@@ -401,6 +473,7 @@ def main() -> None:
                     builder=builder,
                     params=params,
                     seed=args.seed,
+                    oversample_pos_ratio=args.oversample_pos_ratio,
                 )
                 row = {
                     "k_star": k_star,
@@ -412,12 +485,20 @@ def main() -> None:
                 candidate_results.append(row)
                 leaderboard_rows.append(row)
 
-            best_row = min(candidate_results, key=lambda r: r["brier_mean"])
+            best_row = max(
+                candidate_results,
+                key=lambda r: (
+                    r["sens_mean"],
+                    -r["brier_mean"],
+                    r["roc_auc_mean"],
+                ),
+            )
             best_params = json.loads(best_row["params"])
             LOGGER.info(
-                "Лучшие параметры %s по inner Brier: %s (brier=%.4f)",
+                "Лучшие параметры %s по чувствительности: %s (sens=%.4f, brier=%.4f)",
                 model_name,
                 best_params,
+                best_row["sens_mean"],
                 best_row["brier_mean"],
             )
 
@@ -432,6 +513,7 @@ def main() -> None:
                     best_params=best_params,
                     method=method,
                     seed=args.seed,
+                    oversample_pos_ratio=args.oversample_pos_ratio,
                 )
                 row = {
                     "k_star": k_star,
@@ -444,13 +526,25 @@ def main() -> None:
                 calib_results.append(row)
                 leaderboard_rows.append(row)
 
-            best_calib_row = min(calib_results, key=lambda r: r["brier_mean"]) if calib_results else None
+            best_calib_row = (
+                max(
+                    calib_results,
+                    key=lambda r: (
+                        r["sens_mean"],
+                        -r["brier_mean"],
+                        r["roc_auc_mean"],
+                    ),
+                )
+                if calib_results
+                else None
+            )
             best_calibrator = best_calib_row["calibrator"] if best_calib_row else None
             if best_calibrator:
                 LOGGER.info(
-                    "Лучший калибратор для %s: %s (brier=%.4f)",
+                    "Лучший калибратор для %s: %s (sens=%.4f, brier=%.4f)",
                     model_name,
                     best_calibrator,
+                    best_calib_row["sens_mean"],
                     best_calib_row["brier_mean"],
                 )
 
@@ -464,6 +558,8 @@ def main() -> None:
                 builder=builder,
                 best_params=best_params,
                 best_calibrator=best_calibrator,
+                oversample_pos_ratio=args.oversample_pos_ratio,
+                seed=args.seed,
             )
 
             leaderboard_rows.append(
@@ -476,9 +572,13 @@ def main() -> None:
                     "roc_auc_mean": test_metrics["roc_auc"],
                     "pr_auc_mean": test_metrics["pr_auc"],
                     "brier_mean": test_metrics["brier"],
+                    "sens_mean": test_metrics["sens"],
+                    "spec_mean": test_metrics["spec"],
                     "roc_auc_std": 0.0,
                     "pr_auc_std": 0.0,
                     "brier_std": 0.0,
+                    "sens_std": 0.0,
+                    "spec_std": 0.0,
                 }
             )
             kstar_comparison_rows.append(
@@ -488,9 +588,11 @@ def main() -> None:
                     "test_roc_auc": test_metrics["roc_auc"],
                     "test_pr_auc": test_metrics["pr_auc"],
                     "test_brier": test_metrics["brier"],
+                    "test_sens": test_metrics["sens"],
+                    "test_spec": test_metrics["spec"],
                 }
             )
-            best_test_roc_auc_for_k = max(best_test_roc_auc_for_k, test_metrics["roc_auc"])
+            best_test_sens_for_k = max(best_test_sens_for_k, test_metrics["sens"])
 
             per_k_models[model_name] = {
                 "status": "ok",
@@ -500,20 +602,24 @@ def main() -> None:
                     "roc_auc": best_row["roc_auc_mean"],
                     "pr_auc": best_row["pr_auc_mean"],
                     "brier": best_row["brier_mean"],
+                    "sens": best_row["sens_mean"],
+                    "spec": best_row["spec_mean"],
                 },
                 "inner_calibration_metrics": {
                     r["calibrator"]: {
                         "roc_auc": r["roc_auc_mean"],
                         "pr_auc": r["pr_auc_mean"],
                         "brier": r["brier_mean"],
+                        "sens": r["sens_mean"],
+                        "spec": r["spec_mean"],
                     }
                     for r in calib_results
                 },
                 "test_metrics": test_metrics,
             }
 
-        if best_test_roc_auc_for_k > best_k_score:
-            best_k_score = best_test_roc_auc_for_k
+        if best_test_sens_for_k > best_k_score:
+            best_k_score = best_test_sens_for_k
             best_k_star = k_star
             best_summary_for_models = per_k_models
             best_features_used = features_used
@@ -522,7 +628,7 @@ def main() -> None:
             "k_star": k_star,
             "n_features": len(features_used),
             "features_used": features_used,
-            "best_test_roc_auc": best_test_roc_auc_for_k,
+            "best_test_sens": best_test_sens_for_k,
             "models": per_k_models,
         }
 
@@ -539,7 +645,7 @@ def main() -> None:
         "k_star_metrics": [
             {
                 "k_star": int(k),
-                "best_test_roc_auc": v["best_test_roc_auc"],
+                "best_test_sens": v["best_test_sens"],
             }
             for k, v in kstar_results.items()
         ],
@@ -562,7 +668,7 @@ def main() -> None:
     )
 
     print("\nСводка результатов")
-    print(f"Лучший k_star по test ROC-AUC: {best_k_star}")
+    print(f"Лучший k_star по test Sensitivity: {best_k_star}")
     for model_name in model_order:
         model_info = best_summary_for_models.get(model_name, {})
         status = model_info.get("status")
@@ -574,10 +680,10 @@ def main() -> None:
         metrics = model_info["inner_best_metrics"]
         print(
             f"- {model_name}: top-1 параметры={best_params}, "
-            f"inner_brier={metrics['brier']:.4f}, лучший_калибратор={best_calib}"
+            f"inner_sens={metrics['sens']:.4f}, inner_brier={metrics['brier']:.4f}, "
+            f"лучший_калибратор={best_calib}"
         )
     print(f"сохранено в: {out_dir.resolve()}")
 
 if __name__ == "__main__":
     main()
-

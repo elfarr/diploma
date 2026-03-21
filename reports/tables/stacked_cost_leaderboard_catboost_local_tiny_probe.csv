@@ -1,0 +1,5 @@
+meta_model,class_weight_spec,meta_c,rf_n_estimators,rf_max_depth,rf_min_samples_leaf,cb_iterations,cb_depth,cb_learning_rate,n_splits,n_repeats,target_pos_ratio,use_raw_features,threshold,tp,fp,fn,tn,sens,spec,cost,constraint_violation,preserve_fn_excess,meets_max_fp,meets_target_fn,meets_preserve_fn_max,meets_both
+catboost,1:7,0.0,0,,0,400,5,0.05,5,1,0.35,True,0.04604039633283703,29,59,5,98,0.8529411764705882,0.6242038216560509,84.0,7.428571428571429,0,False,False,True,False
+catboost,1:7,0.0,0,,0,400,5,0.05,5,1,0.3,True,0.03193595601813648,28,60,6,97,0.8235294117647058,0.6178343949044586,90.0,7.571428571428571,0,False,False,True,False
+catboost,1:8,0.0,0,,0,400,5,0.05,5,1,0.3,True,0.03745500810397197,28,61,6,96,0.8235294117647058,0.6114649681528662,91.0,7.714285714285714,0,False,False,True,False
+catboost,1:8,0.0,0,,0,400,5,0.05,5,1,0.35,True,0.03427259031038292,28,71,6,86,0.8235294117647058,0.5477707006369427,101.0,9.142857142857142,0,False,False,True,False

@@ -1,0 +1,772 @@
+{
+  "preds_path": "reports\\tables\\preds_stacked_preserve6_full.csv",
+  "summary_json_path": "reports\\tables\\stacked_cost_summary_preserve6_full.json",
+  "threshold": 0.31153088478239943,
+  "tp": 27,
+  "fp": 44,
+  "tn": 113,
+  "fn": 7,
+  "n_rows": 191,
+  "top_fp_vs_tp_meta_numeric": [
+    {
+      "feature": "p_range",
+      "mean_group_a": 0.2072642869,
+      "mean_group_b": 0.3953359207,
+      "median_group_a": 0.1623054429,
+      "median_group_b": 0.4077604548,
+      "effect_size": -0.986881058
+    },
+    {
+      "feature": "p_std",
+      "mean_group_a": 0.0889827134,
+      "mean_group_b": 0.1674276028,
+      "median_group_a": 0.0723741012,
+      "median_group_b": 0.169968593,
+      "effect_size": -0.9761747751
+    },
+    {
+      "feature": "p_mean_x_range",
+      "mean_group_a": 0.0583163354,
+      "mean_group_b": 0.156132612,
+      "median_group_a": 0.0218189195,
+      "median_group_b": 0.1376405483,
+      "effect_size": -0.8901510605
+    },
+    {
+      "feature": "p_max",
+      "mean_group_a": 0.3304273343,
+      "mean_group_b": 0.5181802238,
+      "median_group_a": 0.2647058824,
+      "median_group_b": 0.5652173913,
+      "effect_size": -0.8239445379
+    },
+    {
+      "feature": "agree_ge_03",
+      "mean_group_a": 0.4318181818,
+      "mean_group_b": 1.0740740741,
+      "median_group_a": 0.0,
+      "median_group_b": 1.0,
+      "effect_size": -0.8168202851
+    },
+    {
+      "feature": "p_cat_minus_mlp",
+      "mean_group_a": 0.105577224,
+      "mean_group_b": 0.2816500575,
+      "median_group_a": 0.0763040623,
+      "median_group_b": 0.3660134731,
+      "effect_size": -0.7978814592
+    },
+    {
+      "feature": "p_cat_x_svm",
+      "mean_group_a": 0.0803936503,
+      "mean_group_b": 0.188113269,
+      "median_group_a": 0.050714411,
+      "median_group_b": 0.1359662606,
+      "effect_size": -0.7657779856
+    },
+    {
+      "feature": "p_cat",
+      "mean_group_a": 0.2565798478,
+      "mean_group_b": 0.4289266114,
+      "median_group_a": 0.2380952381,
+      "median_group_b": 0.4541468523,
+      "effect_size": -0.7518636915
+    },
+    {
+      "feature": "p_mean",
+      "mean_group_a": 0.2248327249,
+      "mean_group_b": 0.3150219912,
+      "median_group_a": 0.2024709208,
+      "median_group_b": 0.3328638378,
+      "effect_size": -0.6804421546
+    },
+    {
+      "feature": "agree_ge_05",
+      "mean_group_a": 0.3181818182,
+      "mean_group_b": 0.7777777778,
+      "median_group_a": 0.0,
+      "median_group_b": 1.0,
+      "effect_size": -0.6597408152
+    },
+    {
+      "feature": "logit_p_max",
+      "mean_group_a": -0.777503763,
+      "mean_group_b": 0.9322539256,
+      "median_group_a": -1.0216512475,
+      "median_group_b": 0.2623642645,
+      "effect_size": -0.623062096
+    },
+    {
+      "feature": "p_median",
+      "mean_group_a": 0.220907793,
+      "mean_group_b": 0.3040414468,
+      "median_group_a": 0.1843867165,
+      "median_group_b": 0.2529762955,
+      "effect_size": -0.6049526624
+    },
+    {
+      "feature": "logit_p_cat",
+      "mean_group_a": -1.5047260164,
+      "mean_group_b": 0.3934643422,
+      "median_group_a": -1.1631508098,
+      "median_group_b": -0.1839293703,
+      "effect_size": -0.597313164
+    },
+    {
+      "feature": "logit_p_mean",
+      "mean_group_a": -1.3270076827,
+      "mean_group_b": -0.9022955675,
+      "median_group_a": -1.3713402341,
+      "median_group_b": -0.6952606557,
+      "effect_size": -0.5971600132
+    },
+    {
+      "feature": "p_cat_x_mlp",
+      "mean_group_a": 0.0417102383,
+      "mean_group_b": 0.0687000625,
+      "median_group_a": 0.0431217643,
+      "median_group_b": 0.0826077246,
+      "effect_size": -0.569267776
+    }
+  ],
+  "top_fp_vs_tn_meta_numeric": [
+    {
+      "feature": "agree_ge_015",
+      "mean_group_a": 2.4090909091,
+      "mean_group_b": 1.0088495575,
+      "median_group_a": 3.0,
+      "median_group_b": 1.0,
+      "effect_size": 1.9791420336
+    },
+    {
+      "feature": "agree_ge_02",
+      "mean_group_a": 1.25,
+      "mean_group_b": 0.1150442478,
+      "median_group_a": 1.0,
+      "median_group_b": 0.0,
+      "effect_size": 1.839262344
+    },
+    {
+      "feature": "logit_p_mean",
+      "mean_group_a": -1.3270076827,
+      "mean_group_b": -2.0469111749,
+      "median_group_a": -1.3713402341,
+      "median_group_b": -2.063426774,
+      "effect_size": 1.4813585334
+    },
+    {
+      "feature": "p_mean",
+      "mean_group_a": 0.2248327249,
+      "mean_group_b": 0.1195025837,
+      "median_group_a": 0.2024709208,
+      "median_group_b": 0.1127026949,
+      "effect_size": 1.3618141027
+    },
+    {
+      "feature": "logit_p_max",
+      "mean_group_a": -0.777503763,
+      "mean_group_b": -1.5710259218,
+      "median_group_a": -1.0216512475,
+      "median_group_b": -1.5422903917,
+      "effect_size": 1.320565871
+    },
+    {
+      "feature": "p_median",
+      "mean_group_a": 0.220907793,
+      "mean_group_b": 0.120020362,
+      "median_group_a": 0.1843867165,
+      "median_group_b": 0.1233380149,
+      "effect_size": 1.3069012815
+    },
+    {
+      "feature": "p_cat",
+      "mean_group_a": 0.2565798478,
+      "mean_group_b": 0.1008047185,
+      "median_group_a": 0.2380952381,
+      "median_group_b": 0.0983606557,
+      "effect_size": 1.2273811705
+    },
+    {
+      "feature": "p_svm",
+      "mean_group_a": 0.2669157031,
+      "mean_group_b": 0.1167785463,
+      "median_group_a": 0.2111535351,
+      "median_group_b": 0.1254914374,
+      "effect_size": 1.2232370071
+    },
+    {
+      "feature": "p_max",
+      "mean_group_a": 0.3304273343,
+      "mean_group_b": 0.1756624213,
+      "median_group_a": 0.2647058824,
+      "median_group_b": 0.1762025659,
+      "effect_size": 1.2063581402
+    },
+    {
+      "feature": "p_cat_x_mlp",
+      "mean_group_a": 0.0417102383,
+      "mean_group_b": 0.013756503,
+      "median_group_a": 0.0431217643,
+      "median_group_b": 0.0163352935,
+      "effect_size": 1.0875672815
+    },
+    {
+      "feature": "p_cat_minus_mlp",
+      "mean_group_a": 0.105577224,
+      "mean_group_b": -0.0401197679,
+      "median_group_a": 0.0763040623,
+      "median_group_b": -0.0764117505,
+      "effect_size": 1.0768314198
+    },
+    {
+      "feature": "p_svm_minus_mlp",
+      "mean_group_a": 0.1159130794,
+      "mean_group_b": -0.0241459401,
+      "median_group_a": 0.0879690392,
+      "median_group_b": -0.0383769745,
+      "effect_size": 1.0520869682
+    },
+    {
+      "feature": "p_svm_x_mlp",
+      "mean_group_a": 0.0426337343,
+      "mean_group_b": 0.0161857924,
+      "median_group_a": 0.0378051679,
+      "median_group_b": 0.0192787451,
+      "effect_size": 1.0179260593
+    },
+    {
+      "feature": "p_cat_x_svm",
+      "mean_group_a": 0.0803936503,
+      "mean_group_b": 0.0132423068,
+      "median_group_a": 0.050714411,
+      "median_group_b": 0.0130364004,
+      "effect_size": 0.9941497867
+    },
+    {
+      "feature": "p_min",
+      "mean_group_a": 0.1231630474,
+      "mean_group_b": 0.0628249678,
+      "median_group_a": 0.1716862836,
+      "median_group_b": 0.0519480519,
+      "effect_size": 0.9471534262
+    }
+  ],
+  "top_fp_vs_tp_raw_numeric": [
+    {
+      "feature": "relative risk",
+      "mean_group_a": 77.5909090909,
+      "mean_group_b": 82.5925925926,
+      "median_group_a": 80.0,
+      "median_group_b": 85.0,
+      "effect_size": -0.6818716787
+    },
+    {
+      "feature": "ДАД перед ТП",
+      "mean_group_a": 34.3181818182,
+      "mean_group_b": 47.9333333333,
+      "median_group_a": 28.15,
+      "median_group_b": 44.3,
+      "effect_size": -0.6730865828
+    },
+    {
+      "feature": "ЛПНП перед ТП",
+      "mean_group_a": 0.8952272727,
+      "mean_group_b": 0.7181481481,
+      "median_group_a": 0.805,
+      "median_group_b": 0.7,
+      "effect_size": 0.6137515898
+    },
+    {
+      "feature": "ЭХО ЛП перед ТП",
+      "mean_group_a": 50.5681818182,
+      "mean_group_b": 53.8888888889,
+      "median_group_a": 50.0,
+      "median_group_b": 53.0,
+      "effect_size": -0.5458873165
+    },
+    {
+      "feature": "ЭХО ЗС перед ТП",
+      "mean_group_a": 31.8181818182,
+      "mean_group_b": 36.5185185185,
+      "median_group_a": 30.0,
+      "median_group_b": 30.0,
+      "effect_size": -0.497499659
+    },
+    {
+      "feature": "Мочевая кислота перед ТП",
+      "mean_group_a": 38.5454545455,
+      "mean_group_b": 40.9259259259,
+      "median_group_a": 38.0,
+      "median_group_b": 40.0,
+      "effect_size": -0.4321939792
+    },
+    {
+      "feature": "ЭХО ИММЛЖ перед ТП",
+      "mean_group_a": 0.4497727273,
+      "mean_group_b": 0.4244444444,
+      "median_group_a": 0.44,
+      "median_group_b": 0.43,
+      "effect_size": 0.430687723
+    },
+    {
+      "feature": "ЭХО ФВ перед ТП",
+      "mean_group_a": 236.5297727273,
+      "mean_group_b": 269.6162962963,
+      "median_group_a": 221.45,
+      "median_group_b": 251.6,
+      "effect_size": -0.3958749469
+    },
+    {
+      "feature": "ОХ перед ТП",
+      "mean_group_a": 2.5888636364,
+      "mean_group_b": 2.2574074074,
+      "median_group_a": 2.38,
+      "median_group_b": 2.1,
+      "effect_size": 0.3708193455
+    },
+    {
+      "feature": "healthy person risk",
+      "mean_group_a": 59.5704545455,
+      "mean_group_b": 108.9333333333,
+      "median_group_a": 16.35,
+      "median_group_b": 33.6,
+      "effect_size": -0.3665785666
+    },
+    {
+      "feature": "ЭХО СДЛА перед ТП",
+      "mean_group_a": 55.7727272727,
+      "mean_group_b": 54.0740740741,
+      "median_group_a": 56.0,
+      "median_group_b": 56.0,
+      "effect_size": 0.3618906843
+    },
+    {
+      "feature": "САД перед ТП",
+      "mean_group_a": 105.6818181818,
+      "mean_group_b": 112.1111111111,
+      "median_group_a": 100.0,
+      "median_group_b": 107.0,
+      "effect_size": -0.342172041
+    },
+    {
+      "feature": "ЭХО ММЛЖ перед ТП",
+      "mean_group_a": 129.1804545455,
+      "mean_group_b": 143.3848148148,
+      "median_group_a": 128.055,
+      "median_group_b": 132.0,
+      "effect_size": -0.3306150086
+    },
+    {
+      "feature": "QRISK3",
+      "mean_group_a": 2.4454545455,
+      "mean_group_b": 1.9518518519,
+      "median_group_a": 1.9,
+      "median_group_b": 0.8,
+      "effect_size": 0.2101765978
+    },
+    {
+      "feature": "ЛПВП перед ТП",
+      "mean_group_a": 2.1452272727,
+      "mean_group_b": 1.9522222222,
+      "median_group_a": 2.0,
+      "median_group_b": 1.9,
+      "effect_size": 0.2081574608
+    }
+  ],
+  "top_fp_vs_tn_raw_numeric": [
+    {
+      "feature": "relative risk",
+      "mean_group_a": 77.5909090909,
+      "mean_group_b": 62.6902654867,
+      "median_group_a": 80.0,
+      "median_group_b": 64.0,
+      "effect_size": 1.4347633354
+    },
+    {
+      "feature": "ДАД перед ТП",
+      "mean_group_a": 34.3181818182,
+      "mean_group_b": 11.1530973451,
+      "median_group_a": 28.15,
+      "median_group_b": 7.4,
+      "effect_size": 1.4302954607
+    },
+    {
+      "feature": "ЛПНП перед ТП",
+      "mean_group_a": 0.8952272727,
+      "mean_group_b": 1.3025663717,
+      "median_group_a": 0.805,
+      "median_group_b": 1.3,
+      "effect_size": -1.2437204547
+    },
+    {
+      "feature": "ОТТ перед ТП",
+      "mean_group_a": 187.5,
+      "mean_group_b": 173.4955752212,
+      "median_group_a": 180.0,
+      "median_group_b": 180.0,
+      "effect_size": 0.5282118232
+    },
+    {
+      "feature": "healthy person risk",
+      "mean_group_a": 59.5704545455,
+      "mean_group_b": 13.7318584071,
+      "median_group_a": 16.35,
+      "median_group_b": 9.6,
+      "effect_size": 0.5080493363
+    },
+    {
+      "feature": "ЭХО КДР перед ТП",
+      "mean_group_a": 11.9090909091,
+      "mean_group_b": 11.1061946903,
+      "median_group_a": 12.0,
+      "median_group_b": 11.0,
+      "effect_size": 0.4524585015
+    },
+    {
+      "feature": "САД перед ТП",
+      "mean_group_a": 105.6818181818,
+      "mean_group_b": 99.1150442478,
+      "median_group_a": 100.0,
+      "median_group_b": 100.0,
+      "effect_size": 0.4045363423
+    },
+    {
+      "feature": "ЭХО МЖП перед ТП",
+      "mean_group_a": 11.3181818182,
+      "mean_group_b": 10.6725663717,
+      "median_group_a": 11.0,
+      "median_group_b": 11.0,
+      "effect_size": 0.3988296863
+    },
+    {
+      "feature": "ЭХО ФВ перед ТП",
+      "mean_group_a": 236.5297727273,
+      "mean_group_b": 209.2002654867,
+      "median_group_a": 221.45,
+      "median_group_b": 192.26,
+      "effect_size": 0.3774180156
+    },
+    {
+      "feature": "Мочевая кислота перед ТП",
+      "mean_group_a": 38.5454545455,
+      "mean_group_b": 36.5221238938,
+      "median_group_a": 38.0,
+      "median_group_b": 37.0,
+      "effect_size": 0.3770371938
+    },
+    {
+      "feature": "QRISK3",
+      "mean_group_a": 2.4454545455,
+      "mean_group_b": 1.7451327434,
+      "median_group_a": 1.9,
+      "median_group_b": 0.8,
+      "effect_size": 0.3321630747
+    },
+    {
+      "feature": "ЭХО ММЛЖ перед ТП",
+      "mean_group_a": 129.1804545455,
+      "mean_group_b": 117.2446017699,
+      "median_group_a": 128.055,
+      "median_group_b": 107.14,
+      "effect_size": 0.2999733065
+    },
+    {
+      "feature": "ЭХО ЛП перед ТП",
+      "mean_group_a": 50.5681818182,
+      "mean_group_b": 49.0707964602,
+      "median_group_a": 50.0,
+      "median_group_b": 48.0,
+      "effect_size": 0.2789327841
+    },
+    {
+      "feature": "ОХ перед ТП",
+      "mean_group_a": 2.5888636364,
+      "mean_group_b": 2.417699115,
+      "median_group_a": 2.38,
+      "median_group_b": 2.3,
+      "effect_size": 0.2037025569
+    },
+    {
+      "feature": "ТГ перед ТП",
+      "mean_group_a": 402.1863636364,
+      "mean_group_b": 426.5849557522,
+      "median_group_a": 399.5,
+      "median_group_b": 403.0,
+      "effect_size": -0.1950205537
+    }
+  ],
+  "top_fp_vs_tp_raw_categorical": [
+    {
+      "feature": "ТЭЛА до ТП",
+      "level": "нет",
+      "count_group_a": 44,
+      "count_group_b": 26,
+      "share_group_a": 1.0,
+      "share_group_b": 0.962962963,
+      "log_odds_ratio": 1.6169567448
+    },
+    {
+      "feature": "Диагноз",
+      "level": "Хронический тубулоинтерстицильный нефрит",
+      "count_group_a": 0,
+      "count_group_b": 1,
+      "share_group_a": 0.0,
+      "share_group_b": 0.037037037,
+      "log_odds_ratio": -1.6169567448
+    },
+    {
+      "feature": "ТЭЛА до ТП",
+      "level": "есть",
+      "count_group_a": 0,
+      "count_group_b": 1,
+      "share_group_a": 0.0,
+      "share_group_b": 0.037037037,
+      "log_odds_ratio": -1.6169567448
+    },
+    {
+      "feature": "стадия ХСН перед ТП",
+      "level": "3 ФК",
+      "count_group_a": 1,
+      "count_group_b": 3,
+      "share_group_a": 0.0227272727,
+      "share_group_b": 0.1111111111,
+      "log_odds_ratio": -1.4213856809
+    },
+    {
+      "feature": "Донор",
+      "level": "трупная почка",
+      "count_group_a": 43,
+      "count_group_b": 25,
+      "share_group_a": 0.9772727273,
+      "share_group_b": 0.9259259259,
+      "log_odds_ratio": 1.0449081097
+    },
+    {
+      "feature": "Донор",
+      "level": "От живого донора неродственная",
+      "count_group_a": 1,
+      "count_group_b": 2,
+      "share_group_a": 0.0227272727,
+      "share_group_b": 0.0740740741,
+      "log_odds_ratio": -1.0449081097
+    },
+    {
+      "feature": "Диагноз",
+      "level": "ХГН",
+      "count_group_a": 29,
+      "count_group_b": 11,
+      "share_group_a": 0.6590909091,
+      "share_group_b": 0.4074074074,
+      "log_odds_ratio": 1.004563585
+    },
+    {
+      "feature": "ОНМК до ТП",
+      "level": "нет",
+      "count_group_a": 42,
+      "count_group_b": 24,
+      "share_group_a": 0.9545454545,
+      "share_group_b": 0.8888888889,
+      "log_odds_ratio": 0.887303195
+    },
+    {
+      "feature": "ОНМК до ТП",
+      "level": "есть",
+      "count_group_a": 2,
+      "count_group_b": 3,
+      "share_group_a": 0.0454545455,
+      "share_group_b": 0.1111111111,
+      "log_odds_ratio": -0.887303195
+    },
+    {
+      "feature": "Диагноз",
+      "level": "АРМС",
+      "count_group_a": 4,
+      "count_group_b": 5,
+      "share_group_a": 0.0909090909,
+      "share_group_b": 0.1851851852,
+      "log_odds_ratio": -0.7884573604
+    },
+    {
+      "feature": "Диагноз",
+      "level": "МКБ",
+      "count_group_a": 1,
+      "count_group_b": 0,
+      "share_group_a": 0.0227272727,
+      "share_group_b": 0.0,
+      "log_odds_ratio": 0.6400373552
+    },
+    {
+      "feature": "Диагноз",
+      "level": "Сахарный диабет",
+      "count_group_a": 4,
+      "count_group_b": 4,
+      "share_group_a": 0.0909090909,
+      "share_group_b": 0.1481481481,
+      "log_odds_ratio": -0.544301553
+    },
+    {
+      "feature": "Диагноз",
+      "level": "ДБСТ",
+      "count_group_a": 3,
+      "count_group_b": 3,
+      "share_group_a": 0.0681818182,
+      "share_group_b": 0.1111111111,
+      "log_odds_ratio": -0.5270203097
+    },
+    {
+      "feature": "Диагноз",
+      "level": "Поликлистоз",
+      "count_group_a": 3,
+      "count_group_b": 3,
+      "share_group_a": 0.0681818182,
+      "share_group_b": 0.1111111111,
+      "log_odds_ratio": -0.5270203097
+    },
+    {
+      "feature": "ИМ до ТП",
+      "level": "есть",
+      "count_group_a": 1,
+      "count_group_b": 1,
+      "share_group_a": 0.0227272727,
+      "share_group_b": 0.037037037,
+      "log_odds_ratio": -0.4956162051
+    }
+  ],
+  "top_fp_vs_tn_raw_categorical": [
+    {
+      "feature": "Диагноз",
+      "level": "Сахарный диабет",
+      "count_group_a": 4,
+      "count_group_b": 0,
+      "share_group_a": 0.0909090909,
+      "share_group_b": 0.0,
+      "log_odds_ratio": 3.2277254401
+    },
+    {
+      "feature": "Диагноз",
+      "level": "ДБСТ",
+      "count_group_a": 3,
+      "count_group_b": 0,
+      "share_group_a": 0.0681818182,
+      "share_group_b": 0.0,
+      "log_odds_ratio": 2.9520195587
+    },
+    {
+      "feature": "Диагноз",
+      "level": "МКБ",
+      "count_group_a": 1,
+      "count_group_b": 0,
+      "share_group_a": 0.0227272727,
+      "share_group_b": 0.0,
+      "log_odds_ratio": 2.0576541875
+    },
+    {
+      "feature": "стадия ХСН перед ТП",
+      "level": "2 ФК",
+      "count_group_a": 17,
+      "count_group_b": 13,
+      "share_group_a": 0.3863636364,
+      "share_group_b": 0.1150442478,
+      "log_odds_ratio": 1.5554829183
+    },
+    {
+      "feature": "КАГ до ТП",
+      "level": "есть",
+      "count_group_a": 4,
+      "count_group_b": 3,
+      "share_group_a": 0.0909090909,
+      "share_group_b": 0.0265486726,
+      "log_odds_ratio": 1.2550279751
+    },
+    {
+      "feature": "КАГ до ТП",
+      "level": "нет",
+      "count_group_a": 40,
+      "count_group_b": 110,
+      "share_group_a": 0.9090909091,
+      "share_group_b": 0.9734513274,
+      "log_odds_ratio": -1.2550279751
+    },
+    {
+      "feature": "Диагноз",
+      "level": "Периодическая болезнь",
+      "count_group_a": 0,
+      "count_group_b": 3,
+      "share_group_a": 0.0,
+      "share_group_b": 0.0265486726,
+      "log_odds_ratio": -1.0363838173
+    },
+    {
+      "feature": "ИБС до ТП",
+      "level": "нет",
+      "count_group_a": 38,
+      "count_group_b": 107,
+      "share_group_a": 0.8636363636,
+      "share_group_b": 0.9469026549,
+      "log_odds_ratio": -1.0268326063
+    },
+    {
+      "feature": "ИБС до ТП",
+      "level": "есть",
+      "count_group_a": 6,
+      "count_group_b": 6,
+      "share_group_a": 0.1363636364,
+      "share_group_b": 0.0530973451,
+      "log_odds_ratio": 1.0268326063
+    },
+    {
+      "feature": "ТЭЛА до ТП",
+      "level": "нет",
+      "count_group_a": 44,
+      "count_group_b": 113,
+      "share_group_a": 1.0,
+      "share_group_b": 1.0,
+      "log_odds_ratio": -0.9363136477
+    },
+    {
+      "feature": "Пол",
+      "level": "муж",
+      "count_group_a": 32,
+      "count_group_b": 58,
+      "share_group_a": 0.7272727273,
+      "share_group_b": 0.5132743363,
+      "log_odds_ratio": 0.9028677115
+    },
+    {
+      "feature": "Пол",
+      "level": "жен",
+      "count_group_a": 12,
+      "count_group_b": 55,
+      "share_group_a": 0.2727272727,
+      "share_group_b": 0.4867256637,
+      "log_odds_ratio": -0.9028677115
+    },
+    {
+      "feature": "стадия ХСН перед ТП",
+      "level": "1 ФК",
+      "count_group_a": 7,
+      "count_group_b": 35,
+      "share_group_a": 0.1590909091,
+      "share_group_b": 0.3097345133,
+      "log_odds_ratio": -0.8158719841
+    },
+    {
+      "feature": "Диагноз",
+      "level": "ХГН",
+      "count_group_a": 29,
+      "count_group_b": 91,
+      "share_group_a": 0.6590909091,
+      "share_group_b": 0.8053097345,
+      "log_odds_ratio": -0.7592734237
+    },
+    {
+      "feature": "Диагноз",
+      "level": "с-м Альпорта",
+      "count_group_a": 0,
+      "count_group_b": 2,
+      "share_group_a": 0.0,
+      "share_group_b": 0.017699115,
+      "log_odds_ratio": -0.6909025107
+    }
+  ]
+}

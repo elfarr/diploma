@@ -1,0 +1,22 @@
+{
+  "meta_model": "logreg",
+  "class_weight_spec": "balanced",
+  "meta_c": 0.05,
+  "rf_n_estimators": 0,
+  "rf_max_depth": null,
+  "rf_min_samples_leaf": 0,
+  "n_splits": 5,
+  "n_repeats": 10,
+  "target_pos_ratio": 0.5,
+  "threshold": 0.7452679671302458,
+  "tp": 18,
+  "fp": 7,
+  "fn": 16,
+  "tn": 150,
+  "sens": 0.5294117647058824,
+  "spec": 0.9554140127388535,
+  "cost": 1287.0,
+  "meets_max_fp": true,
+  "meets_target_fn": false,
+  "meets_both": false
+}

@@ -1,0 +1,6 @@
+outer_fold,best_params,best_calibrator,decision_threshold,constraint_feasible,constraint_violation,inner_fn,inner_fp,inner_fnr,inner_fpr
+1,"{""layers"": [32, 16], ""dropout"": 0.2, ""weight_decay"": 0.01, ""early_stopping"": true}",platt,0.1926191550548661,0,7.333333333333333,6,44,0.2222222222222222,0.352
+2,"{""layers"": [32, 16], ""dropout"": 0.2, ""weight_decay"": 0.01, ""early_stopping"": true}",platt,0.19211391971827507,0,8.0,8,45,0.2857142857142857,0.36
+3,"{""layers"": [32, 16], ""dropout"": 0.2, ""weight_decay"": 0.0001, ""early_stopping"": true}",platt,0.19191350697545403,0,7.0,7,42,0.25925925925925924,0.3333333333333333
+4,"{""layers"": [32, 16], ""dropout"": 0.2, ""weight_decay"": 0.001, ""early_stopping"": true}",platt,0.19150463498126077,0,6.833333333333333,5,41,0.18518518518518517,0.3253968253968254
+5,"{""layers"": [32, 16], ""dropout"": 0.2, ""weight_decay"": 0.01, ""early_stopping"": true}",platt,0.19373416563853554,0,7.0,7,39,0.25925925925925924,0.30952380952380953

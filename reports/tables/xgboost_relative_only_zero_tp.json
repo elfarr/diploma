@@ -1,0 +1,190 @@
+{
+  "mode": "zero_tp_union_overlay",
+  "warning": "Rules were derived from pooled OOF error analysis and require external validation.",
+  "risk_feature_mode": "relative_only",
+  "num_rules": 24,
+  "before": {
+    "tp": 29,
+    "fp": 24,
+    "fn": 5,
+    "tn": 133
+  },
+  "after": {
+    "tp": 29,
+    "fp": 7,
+    "fn": 5,
+    "tn": 150
+  },
+  "sens_after": 0.8529411764705882,
+  "spec_after": 0.9554140127388535,
+  "rules": [
+    {
+      "feature": "ОХ перед ТП",
+      "op": ">=",
+      "value": 3.96,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ОХ перед ТП",
+      "op": ">=",
+      "value": 4.7,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЛПНП перед ТП",
+      "op": ">=",
+      "value": 1.7,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЛПВП перед ТП",
+      "op": ">=",
+      "value": 4.7,
+      "fp_removed_if_applied_alone": 3,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЛПВП перед ТП",
+      "op": ">=",
+      "value": 4.9,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЛПВП перед ТП",
+      "op": ">=",
+      "value": 5.54,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ТГ перед ТП",
+      "op": "<=",
+      "value": 128.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ТГ перед ТП",
+      "op": ">=",
+      "value": 731.0,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ТГ перед ТП",
+      "op": ">=",
+      "value": 774.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "Мочевая кислота перед ТП",
+      "op": "<=",
+      "value": 28.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ЗС перед ТП",
+      "op": "<=",
+      "value": 22.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ФВ перед ТП",
+      "op": "<=",
+      "value": 118.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ФВ перед ТП",
+      "op": "<=",
+      "value": 139.62,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ММЛЖ перед ТП",
+      "op": "<=",
+      "value": 72.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ИММЛЖ перед ТП",
+      "op": ">=",
+      "value": 0.53,
+      "fp_removed_if_applied_alone": 4,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ИММЛЖ перед ТП",
+      "op": ">=",
+      "value": 0.58,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ЭХО ИММЛЖ перед ТП",
+      "op": ">=",
+      "value": 0.59,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "ОТТ перед ТП",
+      "op": "<=",
+      "value": 130.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "САД перед ТП",
+      "op": "<=",
+      "value": 80.0,
+      "fp_removed_if_applied_alone": 4,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "relative risk",
+      "op": "<=",
+      "value": 63.0,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "eng_ldlp_x_relative_risk",
+      "op": ">=",
+      "value": 144.5,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "eng_ldlp_x_ibs_yes",
+      "op": ">=",
+      "value": 0.86,
+      "fp_removed_if_applied_alone": 3,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "eng_ldlp_x_ibs_yes",
+      "op": ">=",
+      "value": 1.04,
+      "fp_removed_if_applied_alone": 2,
+      "tp_removed_if_applied_alone": 0
+    },
+    {
+      "feature": "eng_ldlp_x_ibs_yes",
+      "op": ">=",
+      "value": 1.2,
+      "fp_removed_if_applied_alone": 1,
+      "tp_removed_if_applied_alone": 0
+    }
+  ]
+}

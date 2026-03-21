@@ -100,9 +100,7 @@ if __name__ == "__main__":
         "САД перед ТП": 140,
         "ДАД перед ТП": "80",
         "ЛПНП перед ТП": "1,7",
-        "healthy person risk": "0,2",
         "relative risk": "9,6",
-        "qrisk age": 47
     }
 
     print(inf.predict(sample))

@@ -1,6 +1,5 @@
 {
-  "version": "v2.0.0",
-  "t_low": 0.45,
-  "t_high": 0.65,
-  "rule": "p = вероятность благоприятного исхода; если p < t_low -> неблагоприятный; если p > t_high -> благоприятный; иначе -> неопределено"
+  "t_low": 0.55,
+  "t_high": 0.85,
+  "source_model": "relative_only_production_pack"
 }

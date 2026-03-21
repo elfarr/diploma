@@ -1,0 +1,2 @@
+meta_model,class_weight_spec,meta_c,rf_n_estimators,rf_max_depth,rf_min_samples_leaf,cb_iterations,cb_depth,cb_learning_rate,n_splits,n_repeats,target_pos_ratio,use_raw_features,threshold,tp,fp,fn,tn,sens,spec,cost,constraint_violation,preserve_fn_excess,meets_max_fp,meets_target_fn,meets_preserve_fn_max,meets_both
+logreg,balanced,0.03,0,,0,0,0,0.0,5,1,0.35,True,0.2246222699993097,28,52,6,105,0.8235294117647058,0.6687898089171974,82.0,6.428571428571429,0,False,False,True,False

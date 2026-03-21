@@ -54,7 +54,7 @@ class _LandingScreenState extends State<LandingScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Risk Predictor')),
+      appBar: AppBar(title: const Text('Прогноз риска')),
       body: SingleChildScrollView(
         child: AppResponsiveContainer(
           child: Column(
@@ -65,7 +65,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Демонстрация прогноза риска осложнений после трансплантации почки',
+                      'Оценка риска осложнений после трансплантации почки',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         height: 1.2,
@@ -73,7 +73,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Клинический демо-интерфейс для оценки риска и интерпретации факторов, влияющих на прогноз.',
+                      'Ввод данных пациента, расчет прогноза и краткая интерпретация результата',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -86,36 +86,25 @@ class _LandingScreenState extends State<LandingScreen> {
                   children: const [
                     _BulletTile(
                       icon: Icons.monitor_heart_outlined,
-                      text:
-                          'Приложение рассчитывает прогноз риска осложнений по введенным клиническим данным.',
-                    ),
-                    _BulletTile(
-                      icon: Icons.tune_outlined,
-                      text:
-                          'Входные параметры: возраст, артериальное давление, липидные показатели и другие признаки.',
+                      text: 'Расчет риска по клиническим данным пациента',
                     ),
                     _BulletTile(
                       icon: Icons.analytics_outlined,
-                      text:
-                          'Результат: вероятность, уверенность модели, статус undetermined и топ-факторы.',
-                    ),
-                    _BulletTile(
-                      icon: Icons.science_outlined,
-                      text: 'Это демонстрационная реализация и интерфейс для проверки UX.',
+                      text: 'Результат: вероятность, статус решения и наиболее значимые факторы',
                     ),
                   ],
                 ),
               ),
               const AppWarningCard(
                 text:
-                    'Демонстрационная версия. Не является медицинским изделием. Решение принимает врач.',
+                    'Не является медицинским изделием. Решение принимает врач.',
               ),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _openDemo,
                   icon: const Icon(Icons.play_arrow_rounded),
-                  label: const Text('Открыть демо'),
+                  label: const Text('Приступить к расчету'),
                 ),
               ),
               const SizedBox(height: 10),

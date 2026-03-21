@@ -1,0 +1,6 @@
+outer_fold,best_params,best_calibrator,decision_threshold,constraint_feasible,constraint_violation,inner_fn,inner_fp,inner_fnr,inner_fpr
+1,"{""depth"": 3, ""n_estimators"": 500, ""learning_rate"": 0.03, ""class_weights"": [1, 2]}",platt,0.18227334997864683,0,4.5,4,27,0.14814814814814814,0.216
+2,"{""depth"": 6, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": [1, 1]}",platt,0.21075049114422637,0,5.0,5,14,0.17857142857142858,0.112
+3,"{""depth"": 8, ""n_estimators"": 800, ""learning_rate"": 0.06, ""class_weights"": [1, 15]}",platt,0.1976602758391649,0,5.0,5,21,0.18518518518518517,0.16666666666666666
+4,"{""depth"": 8, ""n_estimators"": 300, ""learning_rate"": 0.03, ""class_weights"": [1, 1]}",platt,0.17563126002207616,0,4.0,4,22,0.14814814814814814,0.1746031746031746
+5,"{""depth"": 6, ""n_estimators"": 500, ""learning_rate"": 0.06, ""class_weights"": [1, 8]}",platt,0.17982780139194857,0,4.666666666666667,4,28,0.14814814814814814,0.2222222222222222

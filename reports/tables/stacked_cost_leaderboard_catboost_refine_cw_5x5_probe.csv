@@ -1,0 +1,5 @@
+meta_model,class_weight_spec,meta_c,rf_n_estimators,rf_max_depth,rf_min_samples_leaf,cb_iterations,cb_depth,cb_learning_rate,cb_l2_leaf_reg,cb_random_strength,cb_bagging_temperature,subgroup_neg_boost,hard_neg_boost,hard_pos_boost,target_pos_ratio,threshold,n_splits,n_repeats,tp,fp,fn,tn,sens,spec,cost,constraint_violation,preserve_fn_excess,meets_max_fp,meets_target_fn,meets_preserve_fn_max,meets_both,phase
+catboost,1:8,0.0,0,,0,400,6,0.05,3.0,1.0,0.0,0.0,0.0,0.0,0.35,0.23013558867983935,5,5,28,28,6,129,0.8235294117647058,0.821656050955414,100.0,5.0,0,False,False,True,False,full
+catboost,1:7.5,0.0,0,,0,400,6,0.05,3.0,1.0,0.0,0.0,0.0,0.0,0.35,0.21471413618354562,5,5,28,30,6,127,0.8235294117647058,0.8089171974522293,102.0,5.0,0,False,False,True,False,full
+catboost,1:8.5,0.0,0,,0,400,6,0.05,3.0,1.0,0.0,0.0,0.0,0.0,0.35,0.20549860316923363,5,5,28,33,6,124,0.8235294117647058,0.7898089171974523,105.0,5.0,0,False,False,True,False,full
+catboost,1:9,0.0,0,,0,400,6,0.05,3.0,1.0,0.0,0.0,0.0,0.0,0.35,0.18852593349984867,5,5,28,37,6,120,0.8235294117647058,0.7643312101910829,109.0,5.0,0,False,False,True,False,full

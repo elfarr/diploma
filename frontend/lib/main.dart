@@ -14,8 +14,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Risk Predictor',
+      title: 'Прогноз риска',
       theme: AppTheme.light(),
+      scrollBehavior: const AppScrollBehavior(),
       initialRoute: '/',
       routes: {
         '/': (_) => const LandingScreen(),

@@ -1,0 +1,7 @@
+meta_model,class_weight_spec,meta_c,rf_n_estimators,rf_max_depth,rf_min_samples_leaf,cb_iterations,cb_depth,cb_learning_rate,n_splits,n_repeats,target_pos_ratio,use_raw_features,threshold,tp,fp,fn,tn,sens,spec,cost,constraint_violation,preserve_fn_excess,meets_max_fp,meets_target_fn,meets_preserve_fn_max,meets_both
+catboost,1:7,0.0,0,,0,400,5,0.05,5,2,0.3,True,0.09874171261548187,29,41,5,116,0.8529411764705882,0.7388535031847133,66.0,4.857142857142857,0,False,False,True,False
+catboost,1:7,0.0,0,,0,400,5,0.05,5,2,0.35,True,0.13404701768936905,28,37,6,120,0.8235294117647058,0.7643312101910829,67.0,5.0,0,False,False,True,False
+catboost,1:9,0.0,0,,0,400,5,0.05,5,2,0.3,True,0.11822428625310961,28,42,6,115,0.8235294117647058,0.732484076433121,72.0,5.0,0,False,False,True,False
+catboost,1:8,0.0,0,,0,400,5,0.05,5,2,0.35,True,0.11791719806797069,28,44,6,113,0.8235294117647058,0.7197452229299363,74.0,5.285714285714286,0,False,False,True,False
+catboost,1:9,0.0,0,,0,400,5,0.05,5,2,0.35,True,0.12530516434354774,28,47,6,110,0.8235294117647058,0.7006369426751592,77.0,5.714285714285714,0,False,False,True,False
+catboost,1:8,0.0,0,,0,400,5,0.05,5,2,0.3,True,0.08262704092977667,28,48,6,109,0.8235294117647058,0.6942675159235668,78.0,5.857142857142857,0,False,False,True,False

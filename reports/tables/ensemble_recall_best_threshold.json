@@ -1,0 +1,7 @@
+﻿{
+    "threshold":  0.0952380952380952,
+    "fn":  3,
+    "fp":  90,
+    "target_fn":  3,
+    "model":  "ensemble"
+}

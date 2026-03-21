@@ -1,0 +1,115 @@
+{
+  "dataset_path": "ml\\data\\processed\\with_inner_folds.csv",
+  "target_col": "Исход",
+  "n_rows": 191,
+  "n_features": 50,
+  "feature_order_source": "models\\v2.0.0\\signature.json",
+  "kept_qrisk_features": [
+    "relative risk"
+  ],
+  "removed_qrisk_features": [
+    "QRISK3",
+    "healthy person risk",
+    "qrisk age"
+  ],
+  "num_cols_inferred": [
+    "ОХ перед ТП",
+    "ЛПНП перед ТП",
+    "ЛПВП перед ТП",
+    "ТГ перед ТП",
+    "Мочевая кислота перед ТП",
+    "ЭХО ЛП перед ТП",
+    "ЭХО КДР перед ТП",
+    "ЭХО МЖП перед ТП",
+    "ЭХО ЗС перед ТП",
+    "ЭХО СДЛА перед ТП",
+    "ЭХО ФВ перед ТП",
+    "ЭХО ММЛЖ перед ТП",
+    "ЭХО ИММЛЖ перед ТП",
+    "ОТТ перед ТП",
+    "САД перед ТП",
+    "ДАД перед ТП",
+    "QRISK3",
+    "healthy person risk",
+    "relative risk",
+    "qrisk age"
+  ],
+  "cat_cols_inferred": [
+    "Пол",
+    "Диагноз",
+    "Донор",
+    "ИБС до ТП",
+    "ХНС до ТП",
+    "ОНМК до ТП",
+    "ТЭЛА до ТП",
+    "ИМ до ТП",
+    "стадия ХСН перед ТП",
+    "КАГ до ТП"
+  ],
+  "numeric_medians": {
+    "ОХ перед ТП": 2.3,
+    "ЛПНП перед ТП": 1.1,
+    "ЛПВП перед ТП": 1.94,
+    "ТГ перед ТП": 400.0,
+    "Мочевая кислота перед ТП": 38.0,
+    "ЭХО ЛП перед ТП": 49.0,
+    "ЭХО КДР перед ТП": 12.0,
+    "ЭХО МЖП перед ТП": 11.0,
+    "ЭХО ЗС перед ТП": 30.0,
+    "ЭХО СДЛА перед ТП": 56.0,
+    "ЭХО ФВ перед ТП": 209.91,
+    "ЭХО ММЛЖ перед ТП": 112.96,
+    "ЭХО ИММЛЖ перед ТП": 0.44,
+    "ОТТ перед ТП": 180.0,
+    "САД перед ТП": 100.0,
+    "ДАД перед ТП": 15.3,
+    "QRISK3": 1.0,
+    "healthy person risk": 12.3,
+    "relative risk": 71.0,
+    "qrisk age": 0.455615567
+  },
+  "thresholds_policy": "preserved_from_reference_pack",
+  "thresholds": {
+    "t_low": 0,
+    "t_high": 0.5,
+    "source_model": "svm_rbf"
+  },
+  "metrics": [
+    {
+      "model": "svm_rbf",
+      "calibration": "platt",
+      "roc_auc_raw": 0.39780816785312856,
+      "brier_raw": 0.14907251677774222,
+      "ece_raw": 0.015281661381382343,
+      "roc_auc_cal": 0.6021918321468716,
+      "brier_cal": 0.14434108766462536,
+      "ece_cal": 0.004822834172845324,
+      "platt_brier": 0.14434108766462536,
+      "isotonic_brier": 0.14564493098524514
+    },
+    {
+      "model": "catboost",
+      "calibration": "isotonic",
+      "roc_auc_raw": 0.8658673660547023,
+      "brier_raw": 0.10565047370180376,
+      "ece_raw": 0.044328532543047805,
+      "roc_auc_cal": 0.8892843761708505,
+      "brier_cal": 0.08902393418100225,
+      "ece_cal": 6.393954592082054e-17,
+      "platt_brier": 0.09968138167444165,
+      "isotonic_brier": 0.08902393418100225
+    },
+    {
+      "model": "mlp",
+      "calibration": "isotonic",
+      "roc_auc_raw": 0.4885724990633196,
+      "brier_raw": 0.8219895287958116,
+      "ece_raw": 0.8219895287958116,
+      "roc_auc_cal": 0.5,
+      "brier_cal": 0.14632274334585124,
+      "ece_cal": 0.0,
+      "platt_brier": 0.14632274334947146,
+      "isotonic_brier": 0.14632274334585124
+    }
+  ]
+}

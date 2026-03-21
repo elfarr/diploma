@@ -1,0 +1,2 @@
+n_estimators,max_depth,learning_rate,min_child_weight,subsample,colsample_bytree,reg_lambda,gamma,scale_pos_weight,threshold,tp,fp,tn,fn,sens,spec,fnr,fpr,constraint_violation,constraint_feasible
+250,2,0.05,6.0,0.8,0.8,6.0,0.0,4.5,0.3790736496448517,29,25,132,5,0.8529411764705882,0.8407643312101911,0.14705882352941177,0.1592356687898089,5.0,False

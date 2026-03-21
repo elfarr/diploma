@@ -1,0 +1,10 @@
+{
+  "model": "svm_rbf",
+  "target_max_fn": 1,
+  "target_max_fp": 7,
+  "tp_total": 28,
+  "fp_total": 42,
+  "tn_total": 115,
+  "fn_total": 6,
+  "meets_target": false
+}

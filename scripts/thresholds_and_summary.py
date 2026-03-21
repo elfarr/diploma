@@ -151,6 +151,10 @@ def compute_threshold_row(y_true: pd.Series, p_pred: pd.Series, t_low: float, t_
     precision = float("nan")
     f1 = float("nan")
 
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
     if n_defined > 0:
         y_d = y[defined_mask].to_numpy()
         p_d = pred_label[defined_mask].astype(int).to_numpy()
@@ -173,14 +177,18 @@ def compute_threshold_row(y_true: pd.Series, p_pred: pd.Series, t_low: float, t_
         "spec": spec,
         "precision": precision,
         "f1": f1,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "tn": tn,
         "n_defined": n_defined,
         "n_total": n_total,
     }
 
 
 def build_threshold_grid(y_true: pd.Series, p_pred: pd.Series, model_name: str) -> pd.DataFrame:
-    t_low_grid = [0.30, 0.35, 0.40, 0.45]
-    t_high_grid = [0.50, 0.55, 0.60, 0.65]
+    t_low_grid = [0.00, 0.02, 0.05, 0.08, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45]
+    t_high_grid = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75]
     rows: List[Dict[str, float]] = []
     for t_low in t_low_grid:
         for t_high in t_high_grid:
@@ -196,14 +204,22 @@ def choose_threshold_pair(grid_df: pd.DataFrame) -> Tuple[float, float]:
     if grid_df.empty:
         raise ValueError("Таблица grid_thresholds пуста.")
 
-    filtered = grid_df[grid_df["coverage"] >= 0.70].copy()
-    if filtered.empty:
-        max_cov = grid_df["coverage"].max()
-        filtered = grid_df[grid_df["coverage"] == max_cov].copy()
+    filtered = grid_df.copy()
+    if "fn" in filtered.columns:
+        fn_target = 1
+        fn_ok = pd.to_numeric(filtered["fn"], errors="coerce") <= fn_target
+        if fn_ok.fillna(False).any():
+            filtered = filtered[fn_ok].copy()
+        else:
+            min_fn = pd.to_numeric(filtered["fn"], errors="coerce").min()
+            filtered = filtered[pd.to_numeric(filtered["fn"], errors="coerce") == min_fn].copy()
 
-    sens_ok = filtered["sens"] >= 0.60
-    if sens_ok.fillna(False).any():
-        filtered = filtered[sens_ok].copy()
+    coverage_ok = filtered["coverage"] >= 0.50
+    if coverage_ok.fillna(False).any():
+        filtered = filtered[coverage_ok].copy()
+    else:
+        max_cov = filtered["coverage"].max()
+        filtered = filtered[filtered["coverage"] == max_cov].copy()
 
     filtered["sens_cmp"] = filtered["sens"].fillna(-1.0)
     filtered["spec_cmp"] = filtered["spec"].fillna(-1.0)
@@ -211,10 +227,18 @@ def choose_threshold_pair(grid_df: pd.DataFrame) -> Tuple[float, float]:
     filtered["youden_cmp"] = filtered["sens_cmp"] + filtered["spec_cmp"] - 1.0
     filtered["width"] = filtered["t_high"] - filtered["t_low"]
 
-    filtered = filtered.sort_values(
-        by=["f1_cmp", "youden_cmp", "sens_cmp", "width", "t_low", "t_high"],
-        ascending=[False, False, False, True, True, True],
-    )
+    if "fn" in filtered.columns and "fp" in filtered.columns:
+        filtered["fn_cmp"] = pd.to_numeric(filtered["fn"], errors="coerce").fillna(float("inf"))
+        filtered["fp_cmp"] = pd.to_numeric(filtered["fp"], errors="coerce").fillna(float("inf"))
+        filtered = filtered.sort_values(
+            by=["fn_cmp", "fp_cmp", "coverage", "f1_cmp", "youden_cmp", "sens_cmp", "width", "t_low", "t_high"],
+            ascending=[True, True, False, False, False, False, True, True, True],
+        )
+    else:
+        filtered = filtered.sort_values(
+            by=["f1_cmp", "youden_cmp", "sens_cmp", "width", "t_low", "t_high"],
+            ascending=[False, False, False, True, True, True],
+        )
     best = filtered.iloc[0]
     return float(best["t_low"]), float(best["t_high"])
 
@@ -301,15 +325,20 @@ def build_final_summary(
 
 
 def choose_best_single_model_for_thresholds(pooled_by_model: Dict[str, pd.DataFrame]) -> str:
-    rows: List[Tuple[str, float, float, float]] = []
+    rows: List[Tuple[str, int, int, float, float]] = []
     for model_name in REQUIRED_MODELS:
         if model_name not in pooled_by_model:
             raise ValueError()
         pooled = pooled_by_model[model_name]
+        y = _to_binary(pooled["y_true"]).to_numpy(dtype=int)
+        p = pooled["p_cal"].astype(float).to_numpy()
+        pred = (p >= 0.5).astype(int)
+        fn = int(((pred == 0) & (y == 1)).sum())
+        fp = int(((pred == 1) & (y == 0)).sum())
         m = compute_basic_metrics(pooled["y_true"], pooled["p_cal"])
-        rows.append((model_name, m["pr_auc"], m["brier"], m["roc_auc"]))
+        rows.append((model_name, fn, fp, m["pr_auc"], m["brier"]))
 
-    rows_sorted = sorted(rows, key=lambda x: (-x[1], x[2], -x[3], x[0]))
+    rows_sorted = sorted(rows, key=lambda x: (x[1], x[2], -x[3], x[4], x[0]))
     return rows_sorted[0][0]
 
 
