@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../models/predict_request.dart';
 import '../../models/signature.dart';
@@ -218,32 +218,10 @@ class _InputScreenState extends State<InputScreen> {
     return formatNum(value, digits: digits);
   }
 
-  String _initialBaseTextForField(String fieldName, {int digits = 3}) {
-    var value = _currentNumber(fieldName);
-    if (value == null) {
-      return '';
-    }
-    final converter = _converterFor(fieldName);
-    final selectedUnit = _unitByField[fieldName];
-    if (converter != null && selectedUnit != null) {
-      value = converter.convert(value, selectedUnit, converter.units.first);
-    }
-    return formatNum(value, digits: digits);
-  }
-
   void _ensureQriskDraftDefaults() {
     if (!_qriskDraft.seeded) {
       _qriskDraft.sex = _inferQriskSex();
       _qriskDraft.seeded = true;
-    }
-    if (_qriskDraft.totalCholText.isEmpty) {
-      _qriskDraft.totalCholText = _initialBaseTextForField('ОХ перед ТП');
-    }
-    if (_qriskDraft.hdlText.isEmpty) {
-      _qriskDraft.hdlText = _initialBaseTextForField('ЛПВП перед ТП');
-    }
-    if (_qriskDraft.sbpText.isEmpty) {
-      _qriskDraft.sbpText = _initialBaseTextForField('САД перед ТП');
     }
     if (_qriskDraft.sbpStdDevText.isEmpty) {
       _qriskDraft.sbpStdDevText = '0';
@@ -640,7 +618,7 @@ class _InputScreenState extends State<InputScreen> {
                         controller: ageController,
                         label: 'Возраст',
                         hint: '25..84',
-                        helperText: 'Допустимый диапазон QRISK3: 25..84 года',
+                        helperText: 'Допустимый диапазон: 25..84 года',
                         onChangedValue: (value) => _qriskDraft.ageText = value,
                       ),
                       const SizedBox(height: 12),
@@ -913,6 +891,9 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   _FieldRange? _displayRange(SignatureField field) {
+    if (field.name == _relativeRiskFieldName) {
+      return null;
+    }
     if (field.min == null || field.max == null) {
       return null;
     }
@@ -1383,3 +1364,4 @@ _UnitConverter? _converterFor(String fieldName) {
 String _normFieldName(String value) {
   return value.toLowerCase().replaceAll(' ', '');
 }
+

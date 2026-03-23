@@ -98,9 +98,7 @@
                    },
                    {
                        "name":  "relative risk",
-                       "type":  "float",
-                       "min":  0.0,
-                       "max":  20.0
+                       "type":  "float"
                    },
                    {
                        "name":  "Пол_жен",

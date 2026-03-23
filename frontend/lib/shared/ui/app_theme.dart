@@ -18,6 +18,16 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFFF7F9FC),
+      splashFactory: NoSplash.splashFactory,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _NoAnimationPageTransitionsBuilder(),
+          TargetPlatform.iOS: _NoAnimationPageTransitionsBuilder(),
+          TargetPlatform.linux: _NoAnimationPageTransitionsBuilder(),
+          TargetPlatform.macOS: _NoAnimationPageTransitionsBuilder(),
+          TargetPlatform.windows: _NoAnimationPageTransitionsBuilder(),
+        },
+      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: scheme.surface,
@@ -92,6 +102,21 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     BuildContext context,
     Widget child,
     ScrollableDetails details,
+  ) {
+    return child;
+  }
+}
+
+class _NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoAnimationPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
   ) {
     return child;
   }
