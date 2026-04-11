@@ -26,7 +26,6 @@ class _FakePredictor:
             "p_cal": 0.2,
             "model_used": "catboost",
             "bin_id": 2,
-            "undetermined": False,
             "confidence": 0.3,
             "thresholds": {"t_low": 0.35, "t_high": 0.65},
             "ood": False,

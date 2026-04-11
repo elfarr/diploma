@@ -351,7 +351,6 @@ class _PredictScreenState extends State<PredictScreen> {
             Text('prob_cal: ${resp.probCal?.toStringAsFixed(4) ?? '-'}'),
             if (resp.prob != null) Text('prob: ${resp.prob!.toStringAsFixed(4)}'),
             if (resp.badge != null) Text('badge: ${resp.badge}'),
-            if (resp.undetermined != null) Text('undetermined: ${resp.undetermined}'),
             if (explain.isNotEmpty) const SizedBox(height: 8),
             if (explain.isNotEmpty) const Text('Топ факторов:'),
             ...explain.map(

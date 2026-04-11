@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/predict_request.dart';
 import '../../models/signature.dart';
@@ -17,6 +18,15 @@ class InputScreen extends StatefulWidget {
 
 class _InputScreenState extends State<InputScreen> {
   static const _relativeRiskFieldName = 'relative risk';
+  static final _nonNegativeDecimalFormatter = TextInputFormatter.withFunction((oldValue, newValue) {
+    final text = newValue.text;
+    if (text.isEmpty) {
+      return newValue;
+    }
+    final normalized = text.replaceAll(' ', '');
+    final ok = RegExp(r'^\d*([.,]\d*)?$').hasMatch(normalized);
+    return ok ? newValue : oldValue;
+  });
 
   final _formKey = GlobalKey<FormState>();
   final _storage = FormStorage();
@@ -270,8 +280,9 @@ class _InputScreenState extends State<InputScreen> {
     var erectileDysfunction = _qriskDraft.erectileDysfunction;
     Qrisk3Result? qriskResult;
     String? calcError;
+    final fieldErrors = <String, String?>{};
 
-    double? parse(TextEditingController controller) => parseNumber(controller.text);
+    double? parse(TextEditingController controller) => parseNumber(controller.text.trim());
 
     void invalidateComputedResult() {
       qriskResult = null;
@@ -284,35 +295,139 @@ class _InputScreenState extends State<InputScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setLocalState) {
+            Map<String, String?> collectQriskFieldErrors() {
+              final errors = <String, String?>{};
+
+              void putError(String key, String message) {
+                errors.putIfAbsent(key, () => message);
+              }
+
+              final ageText = ageController.text.trim();
+              final totalCholText = totalCholController.text.trim();
+              final hdlText = hdlController.text.trim();
+              final sbpText = sbpController.text.trim();
+              final sbpStdDevText = sbpStdDevController.text.trim();
+              final heightText = heightController.text.trim();
+              final weightText = weightController.text.trim();
+              final townsendText = townsendController.text.trim();
+
+              final age = parse(ageController);
+              final totalChol = parse(totalCholController);
+              final hdl = parse(hdlController);
+              final sbp = parse(sbpController);
+              final sbpStdDev = sbpStdDevText.isEmpty ? 0.0 : parse(sbpStdDevController);
+              final heightCm = parse(heightController);
+              final weightKg = parse(weightController);
+              final townsend = townsendText.isEmpty ? 0.0 : parse(townsendController);
+
+              if (ageText.isEmpty) {
+                putError('age', 'Заполните поле');
+              } else if (age == null) {
+                putError('age', 'Введите число');
+              } else if (age < Qrisk3Calculator.minAge || age > Qrisk3Calculator.maxAge) {
+                putError('age', 'Допустимо: 25..84 года');
+              }
+
+              if (totalCholText.isEmpty) {
+                putError('totalChol', 'Заполните поле');
+              } else if (totalChol == null) {
+                putError('totalChol', 'Введите число');
+              } else if (totalChol < 1.0 || totalChol > 20.0) {
+                putError('totalChol', 'Допустимо: 1.0..20.0 ммоль/л');
+              }
+
+              if (hdlText.isEmpty) {
+                putError('hdl', 'Заполните поле');
+              } else if (hdl == null) {
+                putError('hdl', 'Введите число');
+              } else if (hdl < 0.2 || hdl > 5.0) {
+                putError('hdl', 'Допустимо: 0.2..5.0 ммоль/л');
+              }
+
+              if (sbpText.isEmpty) {
+                putError('sbp', 'Заполните поле');
+              } else if (sbp == null) {
+                putError('sbp', 'Введите число');
+              } else if (sbp < Qrisk3Calculator.minSystolicBp || sbp > Qrisk3Calculator.maxSystolicBp) {
+                putError('sbp', 'Допустимо: 70..250 мм рт. ст.');
+              }
+
+              if (sbpStdDevText.isNotEmpty) {
+                if (sbpStdDev == null) {
+                  putError('sbpStdDev', 'Введите число');
+                } else if (sbpStdDev < Qrisk3Calculator.minSbpStdDev ||
+                    sbpStdDev > Qrisk3Calculator.maxSbpStdDev) {
+                  putError('sbpStdDev', 'Допустимо: 0..40 мм рт. ст.');
+                }
+              }
+
+              if (heightText.isEmpty) {
+                putError('height', 'Заполните поле');
+              } else if (heightCm == null) {
+                putError('height', 'Введите число');
+              } else if (heightCm < Qrisk3Calculator.minHeightCm ||
+                  heightCm > Qrisk3Calculator.maxHeightCm) {
+                putError('height', 'Допустимо: 100..250 см');
+              }
+
+              if (weightText.isEmpty) {
+                putError('weight', 'Заполните поле');
+              } else if (weightKg == null) {
+                putError('weight', 'Введите число');
+              } else if (weightKg < Qrisk3Calculator.minWeightKg ||
+                  weightKg > Qrisk3Calculator.maxWeightKg) {
+                putError('weight', 'Допустимо: 20..300 кг');
+              }
+
+              if (townsendText.isNotEmpty) {
+                if (townsend == null) {
+                  putError('townsend', 'Введите число');
+                } else if (townsend < Qrisk3Calculator.minTownsend ||
+                    townsend > Qrisk3Calculator.maxTownsend) {
+                  putError('townsend', 'Допустимо: -15..15');
+                }
+              }
+
+              if (totalChol != null && hdl != null && totalChol <= hdl) {
+                putError('totalChol', 'ОХ должен быть больше ЛПВП');
+                putError('hdl', 'ЛПВП должен быть меньше ОХ');
+              }
+
+              if (heightCm != null && weightKg != null) {
+                final bmi = weightKg / ((heightCm / 100.0) * (heightCm / 100.0));
+                if (!bmi.isFinite || bmi < Qrisk3Calculator.minBmi || bmi > Qrisk3Calculator.maxBmi) {
+                  putError('weight', 'BMI должен быть в диапазоне 15..60 кг/м²');
+                  putError('height', 'Проверьте рост и вес');
+                }
+              }
+
+              return errors;
+            }
+
+            void refreshFieldErrors() {
+              fieldErrors
+                ..clear()
+                ..addAll(collectQriskFieldErrors());
+            }
+
             void recalc() {
               final age = parse(ageController);
               final totalChol = parse(totalCholController);
               final hdl = parse(hdlController);
               final sbp = parse(sbpController);
-              final sbpStdDev = parse(sbpStdDevController) ?? 0.0;
+              final sbpStdDev = sbpStdDevController.text.trim().isEmpty
+                  ? 0.0
+                  : parse(sbpStdDevController)!;
               final heightCm = parse(heightController);
               final weightKg = parse(weightController);
-              final townsend = parse(townsendController) ?? 0.0;
+              final townsend = townsendController.text.trim().isEmpty
+                  ? 0.0
+                  : parse(townsendController)!;
 
-              final missingRequired = <String>[
-                if (age == null) 'возраст',
-                if (totalChol == null) 'общий холестерин',
-                if (hdl == null) 'ЛПВП',
-                if (sbp == null) 'САД',
-                if (heightCm == null) 'рост',
-                if (weightKg == null) 'вес',
-              ];
-
-              String? validationMessage;
-              if (hdl != null && hdl <= 0) {
-                validationMessage = 'ЛПВП должен быть больше 0';
-              } else if (missingRequired.isNotEmpty) {
-                validationMessage = 'Заполните поля: ${missingRequired.join(', ')}';
-              }
-
-              if (validationMessage != null) {
+              refreshFieldErrors();
+              if (fieldErrors.isNotEmpty) {
                 setLocalState(() {
-                  calcError = validationMessage;
+                  calcError = null;
                   qriskResult = null;
                   _qriskDraft.result = null;
                 });
@@ -367,10 +482,10 @@ class _InputScreenState extends State<InputScreen> {
             }
 
             Widget buildNumberField({
+              required String fieldKey,
               required TextEditingController controller,
               required String label,
               required String hint,
-              String? helperText,
               String? tooltipMessage,
               required ValueChanged<String> onChangedValue,
             }) {
@@ -392,12 +507,13 @@ class _InputScreenState extends State<InputScreen> {
               return TextField(
                 controller: controller,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [_nonNegativeDecimalFormatter],
                 decoration: InputDecoration(
                   labelText: label,
                   hintText: hint,
-                  helperText: helperText,
                   border: const OutlineInputBorder(),
                   isDense: true,
+                  errorText: fieldErrors[fieldKey],
                   suffixIcon: tooltip,
                   suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 ),
@@ -405,6 +521,7 @@ class _InputScreenState extends State<InputScreen> {
                   onChangedValue(value);
                   setLocalState(() {
                     invalidateComputedResult();
+                    refreshFieldErrors();
                   });
                 },
               );
@@ -419,10 +536,25 @@ class _InputScreenState extends State<InputScreen> {
             }) {
               return DropdownButtonFormField<T>(
                 value: value,
+                borderRadius: BorderRadius.circular(14),
+                dropdownColor: Theme.of(context).colorScheme.surface,
                 decoration: InputDecoration(
                   labelText: label,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+                  ),
                 ),
                 items: values
                     .map(
@@ -471,7 +603,7 @@ class _InputScreenState extends State<InputScreen> {
                 width: 180,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 ),
@@ -523,25 +655,7 @@ class _InputScreenState extends State<InputScreen> {
               );
             }
 
-            final ageValue = parse(ageController);
-            final totalCholValue = parse(totalCholController);
-            final hdlValue = parse(hdlController);
-            final sbpValue = parse(sbpController);
-            final heightValue = parse(heightController);
-            final weightValue = parse(weightController);
-            final canCalculate = ageValue != null &&
-                ageValue >= 25 &&
-                ageValue <= 84 &&
-                totalCholValue != null &&
-                totalCholValue > 0 &&
-                hdlValue != null &&
-                hdlValue > 0 &&
-                sbpValue != null &&
-                sbpValue > 0 &&
-                heightValue != null &&
-                heightValue > 0 &&
-                weightValue != null &&
-                weightValue > 0;
+            final canCalculate = collectQriskFieldErrors().isEmpty;
 
             return AlertDialog(
               title: const Text('Калькулятор QRISK3'),
@@ -615,14 +729,15 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'age',
                         controller: ageController,
                         label: 'Возраст',
                         hint: '25..84',
-                        helperText: 'Допустимый диапазон: 25..84 года',
                         onChangedValue: (value) => _qriskDraft.ageText = value,
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'totalChol',
                         controller: totalCholController,
                         label: 'Средний ОХ',
                         hint: 'ммоль/л',
@@ -630,6 +745,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'hdl',
                         controller: hdlController,
                         label: 'Средний ЛПВП',
                         hint: 'ммоль/л',
@@ -637,6 +753,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'sbp',
                         controller: sbpController,
                         label: 'Средний САД',
                         hint: 'мм рт. ст.',
@@ -644,6 +761,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'sbpStdDev',
                         controller: sbpStdDevController,
                         label: 'Стандартное отклонение САД',
                         hint: '0',
@@ -653,6 +771,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'height',
                         controller: heightController,
                         label: 'Рост',
                         hint: 'см',
@@ -660,6 +779,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'weight',
                         controller: weightController,
                         label: 'Вес',
                         hint: 'кг',
@@ -667,6 +787,7 @@ class _InputScreenState extends State<InputScreen> {
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
+                        fieldKey: 'townsend',
                         controller: townsendController,
                         label: 'Индекс Townsend',
                         hint: '0',
@@ -871,52 +992,175 @@ class _InputScreenState extends State<InputScreen> {
       return reqErr;
     }
 
-    final range = _displayRange(field);
-    if (range != null) {
-      return numberInRange(
-        raw,
-        min: range.min,
-        max: range.max,
-        required: true,
-      );
-    }
-
     if (raw == null || raw.trim().isEmpty) {
       return 'Обязательное поле';
     }
     if (parseNumber(raw) == null) {
       return 'Введите число';
     }
+
+    return _hardErrorForField(field);
+  }
+
+  bool _canSubmit(List<SignatureField> fields) {
+    for (final field in fields) {
+      if (_categoricalFieldNames.contains(field.name)) {
+        continue;
+      }
+      final raw = _controllers[field.name]?.text;
+      if (_validate(field, raw) != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  double _normalizeToBaseUnit(SignatureField field, double value) {
+    final converter = _converterFor(field.name);
+    final selectedUnit = _unitByField[field.name];
+    if (converter == null || selectedUnit == null) {
+      return value;
+    }
+    final baseUnit = converter.units.first;
+    if (selectedUnit == baseUnit) {
+      return value;
+    }
+    return converter.convert(value, selectedUnit, baseUnit);
+  }
+
+  String? _hardErrorForField(SignatureField field) {
+    final raw = _controllers[field.name]?.text ?? '';
+    final parsed = parseNumber(raw);
+    if (parsed == null) {
+      return null;
+    }
+
+    final baseValue = _normalizeToBaseUnit(field, parsed);
+    return _impossibleValueMessage(field.name, baseValue);
+  }
+
+  String? _softWarningForField(SignatureField field) {
+    final raw = _controllers[field.name]?.text ?? '';
+    final parsed = parseNumber(raw);
+    if (parsed == null) {
+      return null;
+    }
+
+    final baseValue = _normalizeToBaseUnit(field, parsed);
+    if (_impossibleValueMessage(field.name, baseValue) != null) {
+      return null;
+    }
+    if (!_isImplausibleValue(field.name, baseValue)) {
+      return null;
+    }
+
+    return 'Проверьте значение: показатель выглядит нетипично. Убедитесь, что поле заполнено в верных единицах измерения.';
+  }
+
+  String? _impossibleValueMessage(String fieldName, double value) {
+    final key = _normFieldName(fieldName);
+
+    if (value.isNegative) {
+      return 'Некорректное значение';
+    }
+    if (fieldName == _relativeRiskFieldName && value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('ох') || key.contains('chol') || key.contains('totalchol')) &&
+        value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('лпнп') || key.contains('ldl')) && value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('лпвп') || key.contains('hdl')) && value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('тг') || key.contains('triglycer') || key == 'tg') &&
+        value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('мочева') || key.contains('uric')) && value <= 0) {
+      return 'Некорректное значение';
+    }
+    if ((key.contains('сад') ||
+            key.contains('sbp') ||
+            key.contains('дад') ||
+            key.contains('dbp')) &&
+        value <= 0) {
+      return 'Некорректное значение';
+    }
+    if (key.contains('фв')) {
+      if (value <= 0) {
+        return 'Некорректное значение';
+      }
+      if (value > 100) {
+        return 'Некорректное значение';
+      }
+    }
+    if (key.contains('эхо') && value <= 0) {
+      return 'Некорректное значение';
+    }
     return null;
   }
 
-  _FieldRange? _displayRange(SignatureField field) {
-    if (field.name == _relativeRiskFieldName) {
-      return null;
+  bool _isImplausibleValue(String fieldName, double value) {
+    final key = _normFieldName(fieldName);
+
+    if (fieldName == _relativeRiskFieldName) {
+      return value > 20;
     }
-    if (field.min == null || field.max == null) {
-      return null;
+    if (key.contains('ох') || key.contains('chol') || key.contains('totalchol')) {
+      return value < 1.0 || value > 15.0;
+    }
+    if (key.contains('лпнп') || key.contains('ldl')) {
+      return value < 0.3 || value > 12.0;
+    }
+    if (key.contains('лпвп') || key.contains('hdl')) {
+      return value < 0.1 || value > 5.0;
+    }
+    if (key.contains('тг') || key.contains('triglycer') || key == 'tg') {
+      return value < 0.1 || value > 20.0;
+    }
+    if (key.contains('мочева') || key.contains('uric')) {
+      return value < 50.0 || value > 1500.0;
+    }
+    if (key.contains('эхолп')) {
+      return value < 15.0 || value > 80.0;
+    }
+    if (key.contains('эхокдр')) {
+      return value < 25.0 || value > 90.0;
+    }
+    if (key.contains('эхомжп') || key.contains('эхозс')) {
+      return value < 4.0 || value > 25.0;
+    }
+    if (key.contains('эхосдла')) {
+      return value < 5.0 || value > 130.0;
+    }
+    if (key.contains('фв')) {
+      return value < 5.0 || value > 90.0;
+    }
+    if (key.contains('эхоммлж')) {
+      return value < 20.0 || value > 700.0;
+    }
+    if (key.contains('эхоиммлж')) {
+      return value < 10.0 || value > 350.0;
+    }
+    if (key.contains('отт')) {
+      return value > 1.2;
+    }
+    if (key.contains('сад') || key.contains('sbp')) {
+      return value < 60.0 || value > 260.0;
+    }
+    if (key.contains('дад') || key.contains('dbp')) {
+      return value < 30.0 || value > 160.0;
     }
 
-    var min = field.min!;
-    var max = field.max!;
-    final converter = _converterFor(field.name);
-    final selectedUnit = _unitByField[field.name];
-    if (converter != null && selectedUnit != null) {
-      final baseUnit = converter.units.first;
-      min = converter.convert(min, baseUnit, selectedUnit);
-      max = converter.convert(max, baseUnit, selectedUnit);
-    }
-
-    if (min > max) {
-      final t = min;
-      min = max;
-      max = t;
-    }
-    return _FieldRange(min: min, max: max);
+    return false;
   }
 
   Future<void> _submit() async {
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -927,7 +1171,7 @@ class _InputScreenState extends State<InputScreen> {
       final raw = _controllers[field.name]?.text ?? '';
       final parsed = parseNumber(raw);
       if (parsed != null) {
-        features[field.name] = parsed;
+        features[field.name] = _normalizeToBaseUnit(field, parsed);
       } else if (_categoricalFieldNames.contains(field.name)) {
         // For one-hot categorical features, an empty value means "not selected".
         // Backend still expects the feature key, so send explicit zero.
@@ -946,6 +1190,7 @@ class _InputScreenState extends State<InputScreen> {
   Widget build(BuildContext context) {
     final fields = _signature?.fields ?? const <SignatureField>[];
     final numericFields = fields.where((f) => !_categoricalFieldNames.contains(f.name)).toList();
+    final canSubmit = _canSubmit(fields);
 
     return Scaffold(
       appBar: AppBar(
@@ -958,11 +1203,11 @@ class _InputScreenState extends State<InputScreen> {
             itemBuilder: (context) => const [
               PopupMenuItem<String>(
                 value: 'low',
-                child: Text('Пресет: низкий риск'),
+                child: Text('Пациент 1'),
               ),
               PopupMenuItem<String>(
                 value: 'high',
-                child: Text('Пресет: высокий риск'),
+                child: Text('Пациент 2'),
               ),
             ],
           ),
@@ -974,6 +1219,7 @@ class _InputScreenState extends State<InputScreen> {
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
               child: Form(
                 key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
@@ -983,7 +1229,7 @@ class _InputScreenState extends State<InputScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _submit,
+                        onPressed: canSubmit ? _submit : null,
                         child: const Text('Рассчитать'),
                       ),
                     ),
@@ -1042,13 +1288,11 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Widget _buildNumericField(SignatureField field) {
+    final theme = Theme.of(context);
     final converter = _converterFor(field.name);
     final selectedUnit = _unitByField[field.name];
     final isRelativeRiskField = field.name == _relativeRiskFieldName;
-    final displayRange = _displayRange(field);
-    final helperText = displayRange == null
-        ? null
-        : 'Диапазон: ${formatNum(displayRange.min, digits: 3)}..${formatNum(displayRange.max, digits: 3)}';
+    final warningText = _softWarningForField(field);
 
     return _SectionCard(
       child: Column(
@@ -1061,15 +1305,14 @@ class _InputScreenState extends State<InputScreen> {
               labelText: field.name,
               border: const OutlineInputBorder(),
               isDense: true,
-              helperText: helperText,
               suffixIcon: (converter != null && selectedUnit != null)
                   ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                          border: Border.all(color: theme.colorScheme.outlineVariant),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1100,8 +1343,34 @@ class _InputScreenState extends State<InputScreen> {
               suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
             ),
             validator: (v) => _validate(field, v),
-            onChanged: (v) => _values[field.name] = parseNumber(v),
+            onChanged: (v) {
+              setState(() {
+                _values[field.name] = parseNumber(v);
+              });
+            },
           ),
+          if (warningText != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: theme.colorScheme.tertiary,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    warningText,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (isRelativeRiskField)
             Align(
               alignment: Alignment.centerRight,
@@ -1134,7 +1403,7 @@ class _SectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.35),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
@@ -1163,16 +1432,6 @@ class _CategoricalGroup {
 
   final String key;
   final List<SignatureField> fields;
-}
-
-class _FieldRange {
-  const _FieldRange({
-    required this.min,
-    required this.max,
-  });
-
-  final double min;
-  final double max;
 }
 
 class _QriskDraft {
@@ -1364,4 +1623,3 @@ _UnitConverter? _converterFor(String fieldName) {
 String _normFieldName(String value) {
   return value.toLowerCase().replaceAll(' ', '');
 }
-

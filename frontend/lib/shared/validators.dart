@@ -33,7 +33,7 @@ String? numberInRange(
   }
 
   if (parsed < min || parsed > max) {
-    return 'Диапазон: $min..$max';
+    return 'Проверьте значение: показатель выглядит нетипичным.';
   }
 
   return null;

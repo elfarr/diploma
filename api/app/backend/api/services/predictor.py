@@ -141,11 +141,12 @@ def load_artifacts(model_dir: str | Path, default_t_low: float, default_t_high: 
 
 
 def classify(p: float, t_low: float, t_high: float) -> str:
-    if p < t_low:
+    if t_low > t_high:
+        t_low, t_high = t_high, t_low
+    decision_threshold = (t_low + t_high) / 2.0
+    if p < decision_threshold:
         return "low"
-    if p > t_high:
-        return "high"
-    return "undetermined"
+    return "high"
 
 
 def confidence(p_cal: float) -> float:
@@ -328,11 +329,9 @@ class PredictorService:
             p_final = float(p_cat)
 
         risk_class = classify(p_final, self.t_low, self.t_high)
-        undetermined = risk_class == "undetermined"
         conf = confidence(p_final)
         return {
             "risk_class": risk_class,
-            "undetermined": undetermined,
             "p_raw": float((p_raw_svm + p_raw_cat + p_raw_mlp) / 3.0),
             "p_raw_svm": float(p_raw_svm),
             "p_raw_cat": float(p_raw_cat),
@@ -385,7 +384,6 @@ class PredictorService:
         resp = {
             "class": pred["risk_class"],
             "risk_class": pred["risk_class"],
-            "undetermined": pred["undetermined"],
             "p_raw": pred["p_raw"],
             "p_raw_svm": pred["p_raw_svm"],
             "p_raw_cat": pred["p_raw_cat"],

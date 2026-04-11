@@ -77,7 +77,6 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildSuccess(BuildContext context, PredictResponse data) {
     final pCal = data.probCal;
     final top = _topFactors(data.explain);
-    final isUncertain = (data.undetermined ?? false) || data.klass == 'undetermined';
 
     return ListView(
       children: [
@@ -128,8 +127,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   ],
                 ),
               ),
-              if (isUncertain) AppWarningCard(text: undeterminedText()),
-              const AppSectionTitle('Топ факторы'),
+              const AppSectionTitle('Обратите внимание на факторы'),
               if (top.isEmpty)
                 AppCard(
                   child: Text(
@@ -229,12 +227,9 @@ class _ResultScreenState extends State<ResultScreen> {
     if (data.badge != null && data.badge!.trim().isNotEmpty) {
       buffer.writeln('Статус: ${data.badge}');
     }
-    if ((data.undetermined ?? false) || data.klass == 'undetermined') {
-      buffer.writeln('Примечание: ${undeterminedText()}');
-    }
 
     buffer.writeln();
-    buffer.writeln('Наиболее значимые факторы');
+    buffer.writeln('Факторы, на которые стоит обратить внимание');
     if (top.isEmpty) {
       buffer.writeln('Нет данных');
     } else {
@@ -364,12 +359,12 @@ class _ResultScreenState extends State<ResultScreen> {
       if (error.statusCode == 401) {
         return 'Нет доступа (токен).';
       }
-      if (error.statusCode == 422) {
+      if (error.statusCode == 400 || error.statusCode == 422) {
         final details = error.message.trim();
         if (details.isNotEmpty) {
-          return 'Ошибка данных (валидация): $details';
+          return details;
         }
-        return 'Ошибка данных (валидация). Проверь введённые значения.';
+        return 'Проверьте введённые значения: некоторые показатели выглядят нетипично.';
       }
       return 'Ошибка сервера: ${error.statusCode}';
     }
@@ -382,8 +377,6 @@ class _ResultScreenState extends State<ResultScreen> {
         return 'Низкий риск';
       case 'high':
         return 'Высокий риск';
-      case 'undetermined':
-        return 'Неопределённо';
       default:
         return klass;
     }

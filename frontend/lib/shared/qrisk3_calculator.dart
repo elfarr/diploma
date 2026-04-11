@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 enum Qrisk3Sex { female, male }
 
@@ -119,7 +119,8 @@ class Qrisk3Input {
       rheumatoidArthritis: rheumatoidArthritis ?? this.rheumatoidArthritis,
       sle: sle ?? this.sle,
       severeMentalIllness: severeMentalIllness ?? this.severeMentalIllness,
-      atypicalAntipsychotics: atypicalAntipsychotics ?? this.atypicalAntipsychotics,
+      atypicalAntipsychotics:
+          atypicalAntipsychotics ?? this.atypicalAntipsychotics,
       steroids: steroids ?? this.steroids,
       erectileDysfunction: erectileDysfunction ?? this.erectileDysfunction,
       cholesterolHdlRatio: cholesterolHdlRatio ?? this.cholesterolHdlRatio,
@@ -148,6 +149,22 @@ class Qrisk3Result {
 
 class Qrisk3Calculator {
   static const int _surv = 10;
+  static const double minAge = 25.0;
+  static const double maxAge = 84.0;
+  static const double minSystolicBp = 70.0;
+  static const double maxSystolicBp = 250.0;
+  static const double minSbpStdDev = 0.0;
+  static const double maxSbpStdDev = 40.0;
+  static const double minHeightCm = 100.0;
+  static const double maxHeightCm = 250.0;
+  static const double minWeightKg = 20.0;
+  static const double maxWeightKg = 300.0;
+  static const double minTownsend = -15.0;
+  static const double maxTownsend = 15.0;
+  static const double minBmi = 15.0;
+  static const double maxBmi = 60.0;
+  static const double minCholesterolHdlRatio = 1.0;
+  static const double maxCholesterolHdlRatio = 20.0;
 
   static Qrisk3Result calculate(Qrisk3Input input) {
     _validateInput(input);
@@ -164,24 +181,46 @@ class Qrisk3Calculator {
   }
 
   static void _validateInput(Qrisk3Input input) {
-    if (input.age < 25 || input.age > 84) {
+    if (!input.age.isFinite || input.age < minAge || input.age > maxAge) {
       throw ArgumentError('Возраст QRISK3 должен быть в диапазоне 25..84');
     }
-    if (input.cholesterolHdlRatio <= 0) {
-      throw ArgumentError('Соотношение холестерин/ЛПВП должно быть больше 0');
+    if (!input.cholesterolHdlRatio.isFinite ||
+        input.cholesterolHdlRatio < minCholesterolHdlRatio ||
+        input.cholesterolHdlRatio > maxCholesterolHdlRatio) {
+      throw ArgumentError(
+        'Соотношение холестерин/ЛПВП должно быть в диапазоне 1..20',
+      );
     }
-    if (input.systolicBp <= 0) {
-      throw ArgumentError('Систолическое АД должно быть больше 0');
+    if (!input.systolicBp.isFinite ||
+        input.systolicBp < minSystolicBp ||
+        input.systolicBp > maxSystolicBp) {
+      throw ArgumentError('Систолическое АД должно быть в диапазоне 70..250');
     }
-    if (input.sbpStdDev < 0) {
-      throw ArgumentError('Стандартное отклонение САД не может быть отрицательным');
+    if (!input.sbpStdDev.isFinite ||
+        input.sbpStdDev < minSbpStdDev ||
+        input.sbpStdDev > maxSbpStdDev) {
+      throw ArgumentError(
+        'Стандартное отклонение САД должно быть в диапазоне 0..40',
+      );
     }
-    if (input.heightCm <= 0 || input.weightKg <= 0) {
-      throw ArgumentError('Рост и вес должны быть больше 0');
+    if (!input.heightCm.isFinite ||
+        input.heightCm < minHeightCm ||
+        input.heightCm > maxHeightCm) {
+      throw ArgumentError('Рост должен быть в диапазоне 100..250 см');
+    }
+    if (!input.weightKg.isFinite ||
+        input.weightKg < minWeightKg ||
+        input.weightKg > maxWeightKg) {
+      throw ArgumentError('Вес должен быть в диапазоне 20..300 кг');
+    }
+    if (!input.townsend.isFinite ||
+        input.townsend < minTownsend ||
+        input.townsend > maxTownsend) {
+      throw ArgumentError('Индекс Townsend должен быть в диапазоне -15..15');
     }
     final bmi = input.bmi;
-    if (!bmi.isFinite || bmi <= 0) {
-      throw ArgumentError('Некорректный BMI');
+    if (!bmi.isFinite || bmi < minBmi || bmi > maxBmi) {
+      throw ArgumentError('BMI должен быть в диапазоне 15..60 кг/м²');
     }
   }
 
@@ -211,8 +250,12 @@ class Qrisk3Calculator {
   static double _calculateQriskAge(Qrisk3Input input, double targetRisk) {
     double low = 25.0;
     double high = 95.0;
-    final lowRisk = _calculateRisk(_healthyPersonInput(input).copyWith(age: low));
-    final highRisk = _calculateRisk(_healthyPersonInput(input).copyWith(age: high));
+    final lowRisk = _calculateRisk(
+      _healthyPersonInput(input).copyWith(age: low),
+    );
+    final highRisk = _calculateRisk(
+      _healthyPersonInput(input).copyWith(age: high),
+    );
     if (targetRisk <= lowRisk) {
       return low;
     }
@@ -222,7 +265,9 @@ class Qrisk3Calculator {
 
     for (var i = 0; i < 40; i++) {
       final mid = (low + high) / 2.0;
-      final risk = _calculateRisk(_healthyPersonInput(input).copyWith(age: mid));
+      final risk = _calculateRisk(
+        _healthyPersonInput(input).copyWith(age: mid),
+      );
       if (risk < targetRisk) {
         low = mid;
       } else {

@@ -152,8 +152,6 @@ def _enforce_demo_rate_limit(ip: str) -> None:
 
 
 def _build_predict_response(out: dict, include_technical_fields: bool) -> dict:
-    undetermined = out.get("class") == "undetermined"
-
     model_proba_map = {
         "svm_rbf": out.get("p_svm"),
         "catboost": out.get("p_cat"),
@@ -172,7 +170,6 @@ def _build_predict_response(out: dict, include_technical_fields: bool) -> dict:
                 "proba": model_proba,
                 "calibrated": model_proba is not None,
                 "calibration_method": calibration_method,
-                "undetermined": undetermined,
             }
         )
     valid_probas = [m["proba"] for m in models if m["proba"] is not None]
@@ -196,7 +193,6 @@ def _build_predict_response(out: dict, include_technical_fields: bool) -> dict:
         "p_cal": out.get("p_cal"),
         "model_used": out.get("model_used"),
         "bin_id": out.get("bin_id"),
-        "undetermined": out.get("undetermined"),
         "confidence": out.get("confidence"),
         "thresholds": out.get("thresholds"),
         "ood": out.get("ood"),

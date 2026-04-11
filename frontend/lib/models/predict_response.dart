@@ -6,7 +6,6 @@ class PredictResponse {
     this.prob,
     this.probCal,
     this.badge,
-    this.undetermined,
     this.explain = const <ExplainItem>[],
   });
 
@@ -14,7 +13,6 @@ class PredictResponse {
   final double? prob;
   final double? probCal;
   final String? badge;
-  final bool? undetermined;
   final List<ExplainItem> explain;
 
   factory PredictResponse.fromJson(Map<String, dynamic> json) {
@@ -31,7 +29,6 @@ class PredictResponse {
       prob: (json['prob'] as num?)?.toDouble(),
       probCal: ((json['prob_cal'] ?? json['p_cal']) as num?)?.toDouble(),
       badge: json['badge'] as String?,
-      undetermined: json['undetermined'] as bool?,
       explain: explainList,
     );
   }
@@ -42,7 +39,6 @@ class PredictResponse {
       'prob': prob,
       'prob_cal': probCal,
       'badge': badge,
-      'undetermined': undetermined,
       'explain': explain.map((e) => e.toJson()).toList(),
     };
   }

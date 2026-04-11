@@ -9,7 +9,6 @@ if str(ROOT) not in sys.path:
 
 import backend.api.app as appmod
 app = appmod.app
-from backend.api.utils.validators import RangeSpec
 
 
 def base_payload():
@@ -29,11 +28,8 @@ def test_missing_feature():
 def test_out_of_range():
     with TestClient(app, headers={"Authorization": "Bearer secret", "X-Model-Version": "v2.0.0"}) as client:
         payload = base_payload()
-        key = appmod.FEATURE_ORDER[0]
-        appmod.RANGES[key] = RangeSpec(low=-1.0, high=1.0)
-        if appmod.PRED:
-            appmod.PRED.ranges = appmod.RANGES
-        payload["features"][key] = 10.0
+        key = next((name for name in appmod.FEATURE_ORDER if "ОХ" in name or "chol" in name.lower()), appmod.FEATURE_ORDER[0])
+        payload["features"][key] = 1000.0
         resp = client.post("/predict", json=payload)
         assert resp.status_code == 400
 

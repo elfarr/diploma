@@ -2,7 +2,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import List, Dict, Literal, Optional
 
-ClassLabel = Literal["low", "high", "undetermined"]
+ClassLabel = Literal["low", "high"]
 
 
 class ExplainItem(BaseModel):
