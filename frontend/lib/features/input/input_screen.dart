@@ -18,7 +18,10 @@ class InputScreen extends StatefulWidget {
 
 class _InputScreenState extends State<InputScreen> {
   static const _relativeRiskFieldName = 'relative risk';
-  static final _nonNegativeDecimalFormatter = TextInputFormatter.withFunction((oldValue, newValue) {
+  static final _nonNegativeDecimalFormatter = TextInputFormatter.withFunction((
+    oldValue,
+    newValue,
+  ) {
     final text = newValue.text;
     if (text.isEmpty) {
       return newValue;
@@ -52,7 +55,9 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _init() async {
-    final signature = await SignatureSpec.loadFromAssets('assets/signature.json');
+    final signature = await SignatureSpec.loadFromAssets(
+      'assets/signature.json',
+    );
     final saved = await _storage.loadForm();
 
     for (final field in signature.fields) {
@@ -116,12 +121,7 @@ class _InputScreenState extends State<InputScreen> {
       if (entry.value.length < 2) {
         continue;
       }
-      groups.add(
-        _CategoricalGroup(
-          key: entry.key,
-          fields: entry.value,
-        ),
-      );
+      groups.add(_CategoricalGroup(key: entry.key, fields: entry.value));
     }
 
     groups.sort((a, b) => a.key.compareTo(b.key));
@@ -172,17 +172,27 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _clearForm() async {
-    for (final controller in _controllers.values) {
-      controller.clear();
+    FocusScope.of(context).unfocus();
+
+    final fields = _signature?.fields ?? const <SignatureField>[];
+    for (final field in fields) {
+      _controllers[field.name]?.clear();
+      _values[field.name] = null;
+
+      final converter = _converterFor(field.name);
+      if (converter == null) {
+        _unitByField.remove(field.name);
+      } else {
+        _unitByField[field.name] = converter.units.first;
+      }
     }
 
-    _values.clear();
-    _selectedByGroup.clear();
+    for (final group in _categoricalGroups) {
+      _selectedByGroup[group.key] = null;
+    }
     _touchedFieldNames.clear();
     _activePreset = null;
     _qriskDraft.reset();
-
-    _formKey.currentState?.reset();
     await _storage.saveForm(<String, dynamic>{});
 
     if (!mounted) {
@@ -276,13 +286,23 @@ class _InputScreenState extends State<InputScreen> {
     _ensureQriskDraftDefaults();
 
     final ageController = TextEditingController(text: _qriskDraft.ageText);
-    final totalCholController = TextEditingController(text: _qriskDraft.totalCholText);
+    final totalCholController = TextEditingController(
+      text: _qriskDraft.totalCholText,
+    );
     final hdlController = TextEditingController(text: _qriskDraft.hdlText);
     final sbpController = TextEditingController(text: _qriskDraft.sbpText);
-    final sbpStdDevController = TextEditingController(text: _qriskDraft.sbpStdDevText);
-    final heightController = TextEditingController(text: _qriskDraft.heightText);
-    final weightController = TextEditingController(text: _qriskDraft.weightText);
-    final townsendController = TextEditingController(text: _qriskDraft.townsendText);
+    final sbpStdDevController = TextEditingController(
+      text: _qriskDraft.sbpStdDevText,
+    );
+    final heightController = TextEditingController(
+      text: _qriskDraft.heightText,
+    );
+    final weightController = TextEditingController(
+      text: _qriskDraft.weightText,
+    );
+    final townsendController = TextEditingController(
+      text: _qriskDraft.townsendText,
+    );
 
     var sex = _qriskDraft.sex;
     var ethnicity = _qriskDraft.ethnicity;
@@ -302,8 +322,21 @@ class _InputScreenState extends State<InputScreen> {
     Qrisk3Result? qriskResult;
     String? calcError;
     final fieldErrors = <String, String?>{};
+    final touchedFieldKeys = <String>{};
+    var hasTriedCalculate = false;
+    final fieldFocusNodes = <String, FocusNode>{
+      'age': FocusNode(),
+      'totalChol': FocusNode(),
+      'hdl': FocusNode(),
+      'sbp': FocusNode(),
+      'sbpStdDev': FocusNode(),
+      'height': FocusNode(),
+      'weight': FocusNode(),
+      'townsend': FocusNode(),
+    };
 
-    double? parse(TextEditingController controller) => parseNumber(controller.text.trim());
+    double? parse(TextEditingController controller) =>
+        parseNumber(controller.text.trim());
 
     void invalidateComputedResult() {
       qriskResult = null;
@@ -336,16 +369,19 @@ class _InputScreenState extends State<InputScreen> {
               final totalChol = parse(totalCholController);
               final hdl = parse(hdlController);
               final sbp = parse(sbpController);
-              final sbpStdDev = sbpStdDevText.isEmpty ? 0.0 : parse(sbpStdDevController);
+              final sbpStdDev =
+                  sbpStdDevText.isEmpty ? 0.0 : parse(sbpStdDevController);
               final heightCm = parse(heightController);
               final weightKg = parse(weightController);
-              final townsend = townsendText.isEmpty ? 0.0 : parse(townsendController);
+              final townsend =
+                  townsendText.isEmpty ? 0.0 : parse(townsendController);
 
               if (ageText.isEmpty) {
                 putError('age', 'Заполните поле');
               } else if (age == null) {
                 putError('age', 'Введите число');
-              } else if (age < Qrisk3Calculator.minAge || age > Qrisk3Calculator.maxAge) {
+              } else if (age < Qrisk3Calculator.minAge ||
+                  age > Qrisk3Calculator.maxAge) {
                 putError('age', 'Допустимо: 25..84 года');
               }
 
@@ -369,7 +405,8 @@ class _InputScreenState extends State<InputScreen> {
                 putError('sbp', 'Заполните поле');
               } else if (sbp == null) {
                 putError('sbp', 'Введите число');
-              } else if (sbp < Qrisk3Calculator.minSystolicBp || sbp > Qrisk3Calculator.maxSystolicBp) {
+              } else if (sbp < Qrisk3Calculator.minSystolicBp ||
+                  sbp > Qrisk3Calculator.maxSystolicBp) {
                 putError('sbp', 'Допустимо: 70..250 мм рт. ст.');
               }
 
@@ -415,9 +452,15 @@ class _InputScreenState extends State<InputScreen> {
               }
 
               if (heightCm != null && weightKg != null) {
-                final bmi = weightKg / ((heightCm / 100.0) * (heightCm / 100.0));
-                if (!bmi.isFinite || bmi < Qrisk3Calculator.minBmi || bmi > Qrisk3Calculator.maxBmi) {
-                  putError('weight', 'BMI должен быть в диапазоне 15..60 кг/м²');
+                final bmi =
+                    weightKg / ((heightCm / 100.0) * (heightCm / 100.0));
+                if (!bmi.isFinite ||
+                    bmi < Qrisk3Calculator.minBmi ||
+                    bmi > Qrisk3Calculator.maxBmi) {
+                  putError(
+                    'weight',
+                    'BMI должен быть в диапазоне 15..60 кг/м²',
+                  );
                   putError('height', 'Проверьте рост и вес');
                 }
               }
@@ -431,20 +474,41 @@ class _InputScreenState extends State<InputScreen> {
                 ..addAll(collectQriskFieldErrors());
             }
 
+            String? visibleFieldError(String fieldKey) {
+              final error = fieldErrors[fieldKey];
+              if (error == null) {
+                return null;
+              }
+
+              final hasFocus = fieldFocusNodes[fieldKey]?.hasFocus ?? false;
+              if (hasFocus) {
+                return null;
+              }
+
+              if (hasTriedCalculate || touchedFieldKeys.contains(fieldKey)) {
+                return error;
+              }
+
+              return null;
+            }
+
             void recalc() {
               final age = parse(ageController);
               final totalChol = parse(totalCholController);
               final hdl = parse(hdlController);
               final sbp = parse(sbpController);
-              final sbpStdDev = sbpStdDevController.text.trim().isEmpty
-                  ? 0.0
-                  : parse(sbpStdDevController)!;
+              final sbpStdDev =
+                  sbpStdDevController.text.trim().isEmpty
+                      ? 0.0
+                      : parse(sbpStdDevController)!;
               final heightCm = parse(heightController);
               final weightKg = parse(weightController);
-              final townsend = townsendController.text.trim().isEmpty
-                  ? 0.0
-                  : parse(townsendController)!;
+              final townsend =
+                  townsendController.text.trim().isEmpty
+                      ? 0.0
+                      : parse(townsendController)!;
 
+              hasTriedCalculate = true;
               refreshFieldErrors();
               if (fieldErrors.isNotEmpty) {
                 setLocalState(() {
@@ -510,41 +574,52 @@ class _InputScreenState extends State<InputScreen> {
               String? tooltipMessage,
               required ValueChanged<String> onChangedValue,
             }) {
-              final tooltip = tooltipMessage == null
-                  ? null
-                  : Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Tooltip(
-                        message: tooltipMessage,
-                        waitDuration: const Duration(milliseconds: 250),
-                        child: Icon(
-                          Icons.info_outline_rounded,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary,
+              final tooltip =
+                  tooltipMessage == null
+                      ? null
+                      : Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Tooltip(
+                          message: tooltipMessage,
+                          waitDuration: const Duration(milliseconds: 250),
+                          child: Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
-                      ),
-                    );
+                      );
 
-              return TextField(
-                controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [_nonNegativeDecimalFormatter],
-                decoration: InputDecoration(
-                  labelText: label,
-                  hintText: hint,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                  errorText: fieldErrors[fieldKey],
-                  suffixIcon: tooltip,
-                  suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              return Focus(
+                onFocusChange: (_) => setLocalState(() {}),
+                child: TextField(
+                  controller: controller,
+                  focusNode: fieldFocusNodes[fieldKey],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [_nonNegativeDecimalFormatter],
+                  decoration: InputDecoration(
+                    labelText: label,
+                    hintText: hint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    errorText: visibleFieldError(fieldKey),
+                    suffixIcon: tooltip,
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    onChangedValue(value);
+                    setLocalState(() {
+                      touchedFieldKeys.add(fieldKey);
+                      invalidateComputedResult();
+                      refreshFieldErrors();
+                    });
+                  },
                 ),
-                onChanged: (value) {
-                  onChangedValue(value);
-                  setLocalState(() {
-                    invalidateComputedResult();
-                    refreshFieldErrors();
-                  });
-                },
               );
             }
 
@@ -563,28 +638,39 @@ class _InputScreenState extends State<InputScreen> {
                   labelText: label,
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 1.5,
+                    ),
                   ),
                 ),
-                items: values
-                    .map(
-                      (item) => DropdownMenuItem<T>(
-                        value: item,
-                        child: Text(titleOf(item)),
-                      ),
-                    )
-                    .toList(),
+                items:
+                    values
+                        .map(
+                          (item) => DropdownMenuItem<T>(
+                            value: item,
+                            child: Text(titleOf(item)),
+                          ),
+                        )
+                        .toList(),
                 onChanged: (next) {
                   onChanged(next);
                   setLocalState(() {
@@ -624,9 +710,13 @@ class _InputScreenState extends State<InputScreen> {
                 width: 180,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -657,9 +747,8 @@ class _InputScreenState extends State<InputScreen> {
                         children: [
                           TextSpan(
                             text: value,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           if (unit.isNotEmpty)
                             TextSpan(
@@ -682,7 +771,10 @@ class _InputScreenState extends State<InputScreen> {
               title: const Text('Калькулятор QRISK3'),
               contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
               content: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720, maxHeight: 640),
+                constraints: const BoxConstraints(
+                  maxWidth: 720,
+                  maxHeight: 640,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -762,7 +854,8 @@ class _InputScreenState extends State<InputScreen> {
                         controller: totalCholController,
                         label: 'Средний ОХ',
                         hint: 'ммоль/л',
-                        onChangedValue: (value) => _qriskDraft.totalCholText = value,
+                        onChangedValue:
+                            (value) => _qriskDraft.totalCholText = value,
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
@@ -788,7 +881,8 @@ class _InputScreenState extends State<InputScreen> {
                         hint: '0',
                         tooltipMessage:
                             'Показывает, насколько менялось систолическое давление между измерениями. Если данных нет, оставьте 0.',
-                        onChangedValue: (value) => _qriskDraft.sbpStdDevText = value,
+                        onChangedValue:
+                            (value) => _qriskDraft.sbpStdDevText = value,
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
@@ -796,7 +890,8 @@ class _InputScreenState extends State<InputScreen> {
                         controller: heightController,
                         label: 'Рост',
                         hint: 'см',
-                        onChangedValue: (value) => _qriskDraft.heightText = value,
+                        onChangedValue:
+                            (value) => _qriskDraft.heightText = value,
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
@@ -804,7 +899,8 @@ class _InputScreenState extends State<InputScreen> {
                         controller: weightController,
                         label: 'Вес',
                         hint: 'кг',
-                        onChangedValue: (value) => _qriskDraft.weightText = value,
+                        onChangedValue:
+                            (value) => _qriskDraft.weightText = value,
                       ),
                       const SizedBox(height: 12),
                       buildNumberField(
@@ -814,11 +910,13 @@ class _InputScreenState extends State<InputScreen> {
                         hint: '0',
                         tooltipMessage:
                             'Показатель социально-экономической депривации, используемый в формуле QRISK3. Если неизвестен, оставьте 0.',
-                        onChangedValue: (value) => _qriskDraft.townsendText = value,
+                        onChangedValue:
+                            (value) => _qriskDraft.townsendText = value,
                       ),
                       const SizedBox(height: 12),
                       buildBoolField(
-                        label: 'Семейный анамнез сердечно-сосудистых заболеваний',
+                        label:
+                            'Семейный анамнез сердечно-сосудистых заболеваний',
                         value: familyHistoryCvd,
                         onChanged: (value) {
                           familyHistoryCvd = value;
@@ -910,7 +1008,9 @@ class _InputScreenState extends State<InputScreen> {
                       if (calcError != null)
                         Text(
                           calcError!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         )
                       else if (qriskResult != null)
                         Wrap(
@@ -926,21 +1026,30 @@ class _InputScreenState extends State<InputScreen> {
                             ),
                             buildResultTile(
                               label: 'healthy person risk',
-                              value: formatNum(qriskResult!.healthyPersonRisk, digits: 2),
+                              value: formatNum(
+                                qriskResult!.healthyPersonRisk,
+                                digits: 2,
+                              ),
                               unit: '%',
                               tooltipMessage:
                                   'Риск для условно здорового человека того же возраста и пола.',
                             ),
                             buildResultTile(
                               label: 'relative risk',
-                              value: formatNum(qriskResult!.relativeRisk, digits: 3),
+                              value: formatNum(
+                                qriskResult!.relativeRisk,
+                                digits: 3,
+                              ),
                               unit: '',
                               tooltipMessage:
                                   'Отношение индивидуального риска к риску условно здорового человека.',
                             ),
                             buildResultTile(
                               label: 'QRISK age',
-                              value: formatNum(qriskResult!.qriskAge, digits: 1),
+                              value: formatNum(
+                                qriskResult!.qriskAge,
+                                digits: 1,
+                              ),
                               unit: 'лет',
                               tooltipMessage:
                                   'Возраст условно здорового человека с сопоставимым уровнем риска.',
@@ -957,7 +1066,8 @@ class _InputScreenState extends State<InputScreen> {
                           runSpacing: 8,
                           children: [
                             TextButton(
-                              onPressed: () => Navigator.of(dialogContext).pop(),
+                              onPressed:
+                                  () => Navigator.of(dialogContext).pop(),
                               child: const Text('Отмена'),
                             ),
                             OutlinedButton(
@@ -966,7 +1076,10 @@ class _InputScreenState extends State<InputScreen> {
                             ),
                             if (qriskResult != null)
                               FilledButton(
-                                onPressed: () => Navigator.of(dialogContext).pop(qriskResult!.relativeRisk),
+                                onPressed:
+                                    () => Navigator.of(
+                                      dialogContext,
+                                    ).pop(qriskResult!.relativeRisk),
                                 child: const Text('Вставить relative risk'),
                               ),
                           ],
@@ -990,6 +1103,9 @@ class _InputScreenState extends State<InputScreen> {
     heightController.dispose();
     weightController.dispose();
     townsendController.dispose();
+    for (final focusNode in fieldFocusNodes.values) {
+      focusNode.dispose();
+    }
 
     if (result == null) {
       return;
@@ -1007,6 +1123,7 @@ class _InputScreenState extends State<InputScreen> {
     }
     setState(() {});
   }
+
   String? _validate(SignatureField field, String? raw) {
     final reqErr = requiredField(raw);
     if (reqErr != null) {
@@ -1087,7 +1204,9 @@ class _InputScreenState extends State<InputScreen> {
     if (fieldName == _relativeRiskFieldName && value <= 0) {
       return 'Некорректное значение';
     }
-    if ((key.contains('ох') || key.contains('chol') || key.contains('totalchol')) &&
+    if ((key.contains('ох') ||
+            key.contains('chol') ||
+            key.contains('totalchol')) &&
         value <= 0) {
       return 'Некорректное значение';
     }
@@ -1131,7 +1250,9 @@ class _InputScreenState extends State<InputScreen> {
     if (fieldName == _relativeRiskFieldName) {
       return value > 20;
     }
-    if (key.contains('ох') || key.contains('chol') || key.contains('totalchol')) {
+    if (key.contains('ох') ||
+        key.contains('chol') ||
+        key.contains('totalchol')) {
       return value < 1.0 || value > 15.0;
     }
     if (key.contains('лпнп') || key.contains('ldl')) {
@@ -1181,7 +1302,6 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _submit() async {
-
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -1210,7 +1330,8 @@ class _InputScreenState extends State<InputScreen> {
   @override
   Widget build(BuildContext context) {
     final fields = _signature?.fields ?? const <SignatureField>[];
-    final numericFields = fields.where((f) => !_categoricalFieldNames.contains(f.name)).toList();
+    final numericFields =
+        fields.where((f) => !_categoricalFieldNames.contains(f.name)).toList();
     final canSubmit = _canSubmit(fields);
 
     return Scaffold(
@@ -1226,43 +1347,42 @@ class _InputScreenState extends State<InputScreen> {
             tooltip: 'Дополнительно',
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: _applyNamedPreset,
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: 'low',
-                child: Text('Пациент 1'),
-              ),
-              PopupMenuItem<String>(
-                value: 'high',
-                child: Text('Пациент 2'),
-              ),
-            ],
+            itemBuilder:
+                (context) => const [
+                  PopupMenuItem<String>(value: 'low', child: Text('Пациент 1')),
+                  PopupMenuItem<String>(
+                    value: 'high',
+                    child: Text('Пациент 2'),
+                  ),
+                ],
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.disabled,
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    ..._categoricalGroups.map(_buildCategoricalField),
-                    ...numericFields.map(_buildNumericField),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: canSubmit ? _submit : null,
-                        child: const Text('Рассчитать'),
+      body:
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.disabled,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      ..._categoricalGroups.map(_buildCategoricalField),
+                      ...numericFields.map(_buildNumericField),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: canSubmit ? _submit : null,
+                          child: const Text('Рассчитать'),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -1288,18 +1408,28 @@ class _InputScreenState extends State<InputScreen> {
           labelText: group.key,
           filled: true,
           fillColor: Theme.of(context).colorScheme.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.5,
+            ),
           ),
         ),
         items: items,
@@ -1327,49 +1457,57 @@ class _InputScreenState extends State<InputScreen> {
           TextFormField(
             controller: _controllers[field.name],
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            autovalidateMode: _touchedFieldNames.contains(field.name)
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
+            autovalidateMode:
+                _touchedFieldNames.contains(field.name)
+                    ? AutovalidateMode.always
+                    : AutovalidateMode.disabled,
             decoration: InputDecoration(
               labelText: field.name,
               border: const OutlineInputBorder(),
               isDense: true,
-              suffixIcon: (converter != null && selectedUnit != null)
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: theme.colorScheme.outlineVariant),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: selectedUnit,
-                              borderRadius: BorderRadius.circular(12),
-                              isDense: true,
-                              items: converter.units
-                                  .map(
-                                    (u) => DropdownMenuItem<String>(
-                                      value: u,
-                                      child: Text(u),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (u) {
-                                if (u != null) {
-                                  _changeUnit(field, u);
-                                }
-                              },
+              suffixIcon:
+                  (converter != null && selectedUnit != null)
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: selectedUnit,
+                                borderRadius: BorderRadius.circular(12),
+                                isDense: true,
+                                items:
+                                    converter.units
+                                        .map(
+                                          (u) => DropdownMenuItem<String>(
+                                            value: u,
+                                            child: Text(u),
+                                          ),
+                                        )
+                                        .toList(),
+                                onChanged: (u) {
+                                  if (u != null) {
+                                    _changeUnit(field, u);
+                                  }
+                                },
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                  : null,
-              suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                      )
+                      : null,
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
             ),
             validator: (v) => _validate(field, v),
             onChanged: (v) {
@@ -1417,10 +1555,7 @@ class _InputScreenState extends State<InputScreen> {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    this.title,
-    required this.child,
-  });
+  const _SectionCard({this.title, required this.child});
 
   final String? title;
   final Widget child;
@@ -1443,7 +1578,9 @@ class _SectionCard extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -1455,10 +1592,7 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _CategoricalGroup {
-  const _CategoricalGroup({
-    required this.key,
-    required this.fields,
-  });
+  const _CategoricalGroup({required this.key, required this.fields});
 
   final String key;
   final List<SignatureField> fields;
@@ -1595,10 +1729,7 @@ String _qriskEthnicityLabel(Qrisk3Ethnicity ethnicity) {
 }
 
 class _UnitConverter {
-  const _UnitConverter({
-    required this.units,
-    required this.convert,
-  });
+  const _UnitConverter({required this.units, required this.convert});
 
   final List<String> units;
   final double Function(double value, String from, String to) convert;
@@ -1666,7 +1797,10 @@ _UnitConverter? _converterFor(String fieldName) {
     );
   }
 
-  if (key.contains('sbp') || key.contains('сад') || key.contains('dbp') || key.contains('дад')) {
+  if (key.contains('sbp') ||
+      key.contains('сад') ||
+      key.contains('dbp') ||
+      key.contains('дад')) {
     return _UnitConverter(
       units: const ['mmHg', 'kPa'],
       convert: (value, from, to) {
