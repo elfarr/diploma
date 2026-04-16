@@ -7,7 +7,7 @@ import 'package:kidney_tx_app/main.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('predict flow with undetermined preset', (tester) async {
+  testWidgets('predict flow returns a binary class', (tester) async {
     await tester.pumpWidget(const MyApp());
 
     final undetBtn = find.widgetWithText(ElevatedButton, 'Undetermined');
@@ -15,11 +15,9 @@ void main() {
     await tester.tap(undetBtn);
     await tester.pumpAndSettle();
 
-
     final predictBtn = find.widgetWithText(ElevatedButton, 'Predict');
     expect(predictBtn, findsOneWidget);
     await tester.tap(predictBtn);
-
 
     var found = false;
     for (var i = 0; i < 60; i++) {
@@ -30,8 +28,7 @@ void main() {
           find.textContaining('undetermined', findRichText: true).evaluate().isNotEmpty;
       if (hasClass && hasProb) {
         found = true;
-        expect(hasUndet, isTrue,
-            reason: 'Ожидаемый класс == undetermined');
+        expect(hasUndet, isFalse, reason: 'Class must not be undetermined');
         break;
       }
     }

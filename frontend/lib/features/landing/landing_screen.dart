@@ -90,7 +90,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     _BulletTile(
                       icon: Icons.analytics_outlined,
-                      text: 'Результат: вероятность, статус решения и наиболее значимые факторы',
+                      text: 'Результат: вероятность, статус решения и факторы, на которые стоит обратить внимание',
                     ),
                   ],
                 ),

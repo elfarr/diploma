@@ -35,6 +35,7 @@ class _InputScreenState extends State<InputScreen> {
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, dynamic> _values = {};
   final Map<String, String> _unitByField = {};
+  final Set<String> _touchedFieldNames = <String>{};
 
   final List<_CategoricalGroup> _categoricalGroups = [];
   final Map<String, String?> _selectedByGroup = {};
@@ -168,6 +169,26 @@ class _InputScreenState extends State<InputScreen> {
     setState(() {
       _activePreset = name;
     });
+  }
+
+  Future<void> _clearForm() async {
+    for (final controller in _controllers.values) {
+      controller.clear();
+    }
+
+    _values.clear();
+    _selectedByGroup.clear();
+    _touchedFieldNames.clear();
+    _activePreset = null;
+    _qriskDraft.reset();
+
+    _formKey.currentState?.reset();
+    await _storage.saveForm(<String, dynamic>{});
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
   }
 
   void _selectGroupOption(_CategoricalGroup group, String selectedFieldName) {
@@ -1196,6 +1217,11 @@ class _InputScreenState extends State<InputScreen> {
       appBar: AppBar(
         title: const Text('Ввод данных'),
         actions: [
+          IconButton(
+            tooltip: 'Очистить форму',
+            icon: const Icon(Icons.cleaning_services_rounded),
+            onPressed: _clearForm,
+          ),
           PopupMenuButton<String>(
             tooltip: 'Дополнительно',
             icon: const Icon(Icons.more_vert_rounded),
@@ -1219,7 +1245,7 @@ class _InputScreenState extends State<InputScreen> {
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
               child: Form(
                 key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+                autovalidateMode: AutovalidateMode.disabled,
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
@@ -1301,6 +1327,9 @@ class _InputScreenState extends State<InputScreen> {
           TextFormField(
             controller: _controllers[field.name],
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            autovalidateMode: _touchedFieldNames.contains(field.name)
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
             decoration: InputDecoration(
               labelText: field.name,
               border: const OutlineInputBorder(),
@@ -1345,6 +1374,7 @@ class _InputScreenState extends State<InputScreen> {
             validator: (v) => _validate(field, v),
             onChanged: (v) {
               setState(() {
+                _touchedFieldNames.add(field.name);
                 _values[field.name] = parseNumber(v);
               });
             },
@@ -1464,6 +1494,38 @@ class _QriskDraft {
   bool erectileDysfunction = false;
 
   Qrisk3Result? result;
+
+  void reset() {
+    seeded = false;
+
+    ageText = '';
+    totalCholText = '';
+    hdlText = '';
+    sbpText = '';
+    sbpStdDevText = '';
+    heightText = '';
+    weightText = '';
+    townsendText = '';
+
+    sex = Qrisk3Sex.female;
+    ethnicity = Qrisk3Ethnicity.whiteOrNotStated;
+    smoking = Qrisk3Smoking.nonSmoker;
+    diabetes = Qrisk3Diabetes.none;
+
+    familyHistoryCvd = false;
+    chronicKidneyDisease = false;
+    atrialFibrillation = false;
+    bpTreatment = false;
+    migraine = false;
+    rheumatoidArthritis = false;
+    sle = false;
+    severeMentalIllness = false;
+    atypicalAntipsychotics = false;
+    steroids = false;
+    erectileDysfunction = false;
+
+    result = null;
+  }
 }
 
 String _optionLabel(String groupKey, String fullFieldName) {

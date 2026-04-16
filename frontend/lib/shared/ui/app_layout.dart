@@ -42,6 +42,7 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
+      width: double.infinity,
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
@@ -76,7 +77,7 @@ class AppWarningCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.errorContainer,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: scheme.error.withValues(alpha: 0.3)),
+        border: Border.all(color: scheme.error.withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
